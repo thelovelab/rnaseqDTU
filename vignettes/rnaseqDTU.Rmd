@@ -1,0 +1,49 @@
+---
+title: "Swimming downstream: statistical analysis of differential transcript usage following Salmon quantification"
+author:
+- name: Michael I. Love
+  affiliation: 
+  - Department of Biostatistics, UNC-Chapel Hill, Chapel Hill, NC, US
+  - Department of Genetics, UNC-Chapel Hill, Chapel Hill, NC, US
+- name: Rob Patro
+  affiliation: Department of Computer Science, Stony Brook University
+date: 5 June, 2018
+output: BiocStyle::html_document
+bibliography: bibliography.bib
+vignette: >
+  %\VignetteIndexEntry{RNA-seq workflow for differential transcript usage following Salmon quantification}
+  %\VignetteEngine{knitr::rmarkdown}
+abstract: |
+  RNA-seq workflow for differential transcript usage following Salmon quantification.
+---
+
+<!-- to compile this: rmarkdown::render("rnaseqDTU.Rmd") -->
+
+<!--
+     # a list of all required libraries:
+     reqlibs = sub(".*library\\((.*?)\\).*","\\1",grep("library\\(",readLines("rnaseqDTU.Rmd"),value=TRUE))
+     find.package(reqlibs)
+-->
+
+```{r style, echo=FALSE, message=FALSE, warning=FALSE, results="asis"}
+library(BiocStyle)
+library(knitr)
+library(rmarkdown)
+opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE,
+               cache = FALSE, fig.width = 5, fig.height = 5)
+```
+
+**R version**: `r R.version.string`
+
+**Bioconductor version**: `r BiocInstaller::biocVersion()`
+
+**Package**: `r packageVersion("DRIMSeq")`
+
+This is where the text goes [@Patro2017Salmon].
+
+```{r}
+library(DRIMSeq)
+rnorm(6)
+```
+
+# References

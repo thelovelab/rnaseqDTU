@@ -4,7 +4,7 @@ Version: 0.0.99
 Date: 2018-06-05
 Authors@R: c(person(role=c("aut", "cre"), "Michael", "Love", email = "michaelisaiahlove@gmail.com"),
              person(role=c("aut"), "Rob", "Patro"))
-Description: RNA-seq workflow for differential transcript usage following Salmon quantification
+Description: RNA-seq workflow for differential transcript usage following Salmon quantification.
 Depends: R (>= 3.5.0),
          DRIMSeq,
 	 DEXSeq,

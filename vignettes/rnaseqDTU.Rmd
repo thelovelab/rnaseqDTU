@@ -54,21 +54,12 @@ biomedical researchers. While many packages and workflows in the
 Bioconductor project address differential gene expression, there are
 fewer guides for performing a differential transcript usage analysis,
 which provides critical and complementary information to a the
-gene-level analysis. Here we provide a simple workflow for detecting
-differential transcript abundance using Bioconductor packages,
-following quantification of transcript abundance using the *Salmon*
-method. This workflow includes live, runnable code chunks for analysis
-using the *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
-testing of differential transcript usage using the *stageR*
-package. For the workflow, we use data which is simulated with
-experimental parameters estimated from the GEUVADIS dataset, so that
-we can also evaluate the performance of methods for differential
-transcript usage, as well as differential gene and transcript
-expression. 
-
-# Methods
-
-## Implementation
+gene-level analysis. Some of the existing packages and vignettes that 
+can be used to detect differential transcript usage include *BitSeq*, 
+*DEXSeq* (originally designed for differential exon usage), `diffSpliceDGE` 
+from the *edgeR* package, `diffSplice` from the *limma* package, *DRIMSeq*, 
+*stageR*, and *IsoformSwitchAnalyzeR*. 
+Others can be found at the following link: <https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>
 
 Previously, some of the developers of the Bioconductor packages
 *edgeR* and *DESeq2* (cite) have collaborated to develop the
@@ -108,9 +99,74 @@ the null hypothesis at the gene-level, investigators would likely
 desire to know which transcripts within a gene participated in the
 differential usage. 
 
+Here we provide a simple workflow for detecting
+differential transcript abundance using Bioconductor packages,
+following quantification of transcript abundance using the *Salmon*
+method. This workflow includes live, runnable code chunks for analysis
+using the *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
+testing of differential transcript usage using the *stageR*
+package. For the workflow, we use data which is simulated with
+experimental parameters estimated from the GEUVADIS dataset, so that
+we can also evaluate the performance of methods for differential
+transcript usage, as well as differential gene and transcript
+expression.
+
+# Methods
+
+## Implementation
+
+All of the code used to simulate RNA-seq experiments and write
+paired-end reads can be found at the following
+link: <https://github.com/mikelove/swimdownsim>. *alpine* was used to
+estimate realistic fragment GC bias from 12 samples from the GEUVADIS
+project from the same center (cite alpine and GEUVADIS). *DESeq2* was
+used to estimate mean and dispersion parameters for a Negative
+Binomial distribution for gene-level counts for 462 GEUVADIS samples
+provided by the *recount2* project (cite DESeq2, recounts2).
+*polyester* was used to simulate paired-end RNA-seq reads for two
+groups of 12 samples each, with realistic fragment GC bias, and with
+dispersion on transcript-level counts following the joint distribution
+of mean and dispersion values estimated from the GEUVADIS samples. The
+first sample for group 1 and the first sample for group 2 followed the
+realistic GC bias profile of the same sample, and so on for all 12
+samples. This pairing of the samples was used to generate balanced
+data, but not used in the statistical analysis. The baseline for
+transcript abundances was taken from Salmon estimates for a single
+sample of the GEUVADIS project (cite Salmon). *countsimQC* was used to
+examine the properties of the simulation relative to the dataset used
+for parameter estimation, and the full report can be accessed at the
+following link: <https://github.com/mikelove/swimdownsim/countsimqc>
+(cite countsimqc).
+
+Differential expression across two groups was generated as follows:
+70% of the genes were set as "null genes", where abundance was not
+changed across two groups. For 10% of genes, all isoforms were
+differentially expressed at a log fold change between 1 and 2.58. This
+set of genes and transcripts were classified as "DGE", differential
+gene expression, but did not count as "DTU", differential transcript
+usage. To simulate balanced differential expression, randomly one of
+the two groups was chosen to be the baseline, and the other group
+would have its counts multiplied by the fold change. For 10% of genes,
+a single expressed isoform was differentially expressed at a log fold
+change between 1 and 2.58. This set of genes was termed "DTE",
+differential transcript expression. If the chosen transcript was the
+only expressed isoform of a gene, this counted as DGE and not DTU,
+but if there were other isoforms which are expressed, such genes
+counted for both DGE and DTU, as the proportion of expression among
+the isoforms was affected. For 10% of genes, differential transcript
+usage was constructed by exchanging the abundance of two expressed
+isoforms, or if only one isoform was expressed, exchanging the
+abundance of the expressed isoform with a non-expressed one. Such
+genes counted for DTU, but not for DGE.
+
 ## Operation
 
-This part of the methods should include the minimal system requirements needed to run the software and an overview of the workflow for the tool for users of the tool.
+This workflow was designed to work with R 3.5 or higher, and the
+*DRIMSeq*, *DEXSeq*, *stageR* and *tximport* packages for Bioconductor
+version 3.7 or later. The workflow uses a subset of all genes to speed
+up the analysis, but the Bioconductor packages can easily be run on
+all human genes on a laptop in less than an hour. Timing for the
+various packages is included within each section.
 
 # Results
 

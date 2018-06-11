@@ -8,42 +8,119 @@ author:
 - name: Rob Patro
   affiliation: Department of Computer Science, Stony Brook University
 date: 5 June, 2018
-output: BiocStyle::html_document
-bibliography: bibliography.bib
 vignette: >
   %\VignetteIndexEntry{RNA-seq workflow for differential transcript usage following Salmon quantification}
   %\VignetteEngine{knitr::rmarkdown}
 abstract: |
   RNA-seq workflow for differential transcript usage following Salmon quantification.
+keywords: RNA-seq, workflow, differential transcript usage, differential isoform usage, Salmon, DRIMSeq, DEXSeq, tximport
+bibliography: bibliography.bib
+output: BiocWorkflowTools::f1000_article
 ---
 
-<!-- to compile this: rmarkdown::render("rnaseqDTU.Rmd") -->
+<!-- to compile this: 
+  rmarkdown::render("rnaseqDTU.Rmd")
+-->
 
-<!--
-     # a list of all required libraries:
-     reqlibs = sub(".*library\\((.*?)\\).*","\\1",grep("library\\(",readLines("rnaseqDTU.Rmd"),value=TRUE))
-     find.package(reqlibs)
+<!-- a list of all required libraries:
+  reqlibs = sub(".*library\\((.*?)\\).*","\\1",grep("library\\(",readLines("rnaseqDTU.Rmd"),value=TRUE))
+  find.package(reqlibs)
 -->
 
 ```{r style, echo=FALSE, message=FALSE, warning=FALSE, results="asis"}
-library(BiocStyle)
 library(knitr)
 library(rmarkdown)
-opts_chunk$set(message = FALSE, error = FALSE, warning = FALSE,
-               cache = FALSE, fig.width = 5, fig.height = 5)
+opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE, 
+               cache=FALSE, fig.width=5, fig.height=5)
 ```
 
 **R version**: `r R.version.string`
 
 **Bioconductor version**: `r BiocInstaller::biocVersion()`
 
+<!-- fix this to rnaseqDTU later -->
 **Package**: `r packageVersion("DRIMSeq")`
 
-This is where the text goes [@Patro2017Salmon].
+# Introduction
+
+RNA-seq experiments can be analyzed to detect changes across groups of
+samples in total gene expression, i.e. the total number of transcripts
+produced by all isoforms of a gene, and additionally differences in
+transcript usage within a gene. If the number of expressed transcripts
+switches among two or more isoforms of a gene, then the total gene
+expression may not change by a detectable amount, but such
+differential transcript usage is of interest to biological and
+biomedical researchers. While many packages and workflows in the
+Bioconductor project address differential gene expression, there are
+fewer guides for performing a differential transcript usage analysis,
+which provides critical and complementary information to a the
+gene-level analysis. Here we provide a simple workflow for detecting
+differential transcript abundance using Bioconductor packages,
+following quantification of transcript abundance using the *Salmon*
+method. This workflow includes live, runnable code chunks for analysis
+using the *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
+testing of differential transcript usage using the *stageR*
+package. For the workflow, we use data which is simulated with
+experimental parameters estimated from the GEUVADIS dataset, so that
+we can also evaluate the performance of methods for differential
+transcript usage, as well as differential gene and transcript
+expression. 
+
+# Methods
+
+## Implementation
+
+Previously, some of the developers of the Bioconductor packages
+*edgeR* and *DESeq2* (cite) have collaborated to develop the
+*tximport* package (cite) for summarizing the output of fast
+transcript-level quantifiers, such as *Salmon*, *Sailfish*, and
+*kallisto* (cite). The *tximport* package focuses on preparing
+estimated transcript-level quantities, counts, abundances and
+effective transcript lengths, for gene-level statistical analysis
+using *edgeR*, *DESeq* or *limma-voom* (cite). *tximport* produces an
+offset matrix to accompany gene-level counts, that accounts for
+various RNA-seq biases (cite Salmon) as well as differences in
+transcript usage among transcripts of different length that would bias
+an estimator of fold change based on the gene-level counts (cite
+Trapnell). *tximport* can alternatively produce a matrix of data that
+is roughly on the scale of counts, by scaling abundances to add up to
+the total number of reads, which directly corrects for technical
+biases and differential transcript usage across samples, obviating the
+need for the accompanying offset matrix. 
+
+Complementary to an analysis of differential gene expression, one can
+use *tximport* to import transcript-level counts, and then pass these
+counts to packages such as *DRIMSeq* or *DEXSeq* for statistical
+analysis of differential transcript usage. Following a
+transcript-level analysis, one can aggregate evidence of differential
+transcript usage to the gene-level. The *stageR* package in
+Bioconductor provides a statistcal framework for screening for
+differential transcript usage using gene-level adjusted p-values,
+followed by confirmation of which transcripts are differential using
+transcript-level adjusted p-values (cite). The method provides
+_overall false discovery rate_ error control for such a two-stage
+procedure, which will be discussed in more detail later in the
+workflow. We believe that this represents a principled approach to
+analyzing transcript usage changes, as the  methods can be evaluated
+against a target error rate in a manner that mimics how the methods
+would actually be used in practice. That is, following rejection of
+the null hypothesis at the gene-level, investigators would likely
+desire to know which transcripts within a gene participated in the
+differential usage. 
+
+## Operation
+
+This part of the methods should include the minimal system requirements needed to run the software and an overview of the workflow for the tool for users of the tool.
+
+# Results
+
+This section is only required if the paper includes novel data or analyses, and should be written as a traditional results section.
 
 ```{r}
 library(DRIMSeq)
 rnorm(6)
 ```
+
+An example reference is @Patro2017Salmon and it also looks like [@Patro2017Salmon].
 
 # References

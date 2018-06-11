@@ -13,7 +13,7 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
 abstract: |
   RNA-seq workflow for differential transcript usage following Salmon quantification.
-keywords: RNA-seq, workflow, differential transcript usage, differential isoform usage, Salmon, DRIMSeq, DEXSeq, tximport
+keywords: RNA-seq, workflow, differential transcript usage, Salmon, DRIMSeq, DEXSeq, stageR, tximport
 bibliography: bibliography.bib
 output: BiocWorkflowTools::f1000_article
 ---
@@ -31,7 +31,7 @@ output: BiocWorkflowTools::f1000_article
 library(knitr)
 library(rmarkdown)
 opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE, 
-               cache=FALSE, fig.width=5, fig.height=5)
+               cache=TRUE, fig.width=5, fig.height=5)
 ```
 
 **R version**: `r R.version.string`
@@ -59,7 +59,8 @@ can be used to detect differential transcript usage include *BitSeq*,
 *DEXSeq* (originally designed for differential exon usage), `diffSpliceDGE` 
 from the *edgeR* package, `diffSplice` from the *limma* package, *DRIMSeq*, 
 *stageR*, and *IsoformSwitchAnalyzeR*. 
-Others can be found at the following link: <https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>
+Others can be found at the following link: 
+<https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>
 
 Previously, some of the developers of the Bioconductor packages
 *edgeR* and *DESeq2* (cite) have collaborated to develop the
@@ -113,8 +114,11 @@ expression.
 
 # Methods
 
-## Implementation
+## Simulation
 
+First we describe details of the simulated data, which will be used in
+the following workflow. Understanding the details of the
+simulation will be useful for assessing the methods in the later sections.
 All of the code used to simulate RNA-seq experiments and write
 paired-end reads can be found at the following
 link: <https://github.com/mikelove/swimdownsim>. *alpine* was used to
@@ -159,23 +163,243 @@ isoforms, or if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
 genes counted for DTU, but not for DGE.
 
+```{r ma-simulated, echo=FALSE, dev="png", out.width="50%", fig.cap = "MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis."}
+load("simulate.rda")
+library(rafalib)
+bigpar()
+pc <- 1
+col <- rep(8, nrow(tpms))
+col[iso.dge] <- 1
+col[iso.dte] <- 2
+col[iso.dtu] <- 3
+maplot(log2(tpms[,1]+pc), log2(tpms[,2]+pc),
+       n=nrow(tpms), curve.add=FALSE,
+       col=col, cex=.25, pch=20)
+legend("bottomright",
+       c("DGE","DTE","DTU","null"),
+       col=c(1:3,8), pch=20, bty="n")
+```
+
 ## Operation
 
 This workflow was designed to work with R 3.5 or higher, and the
 *DRIMSeq*, *DEXSeq*, *stageR* and *tximport* packages for Bioconductor
-version 3.7 or later. The workflow uses a subset of all genes to speed
-up the analysis, but the Bioconductor packages can easily be run on
-all human genes on a laptop in less than an hour. Timing for the
-various packages is included within each section.
+version 3.7 or higher. Bioconductor packages should always be
+installed following the [official instructions](https://bioconductor.org/install).
+The workflow uses a subset of all genes to speed
+up the analysis, but the Bioconductor packages can easily be run for
+this dataset on all human genes on a laptop in less than an
+hour. Timing for the various packages is included within each section.
 
-# Results
+# Salmon quantification
 
-This section is only required if the paper includes novel data or analyses, and should be written as a traditional results section.
+We used *Salmon* version 0.10.0 to quantify abundance and effective
+lengths for all of the 24 simulated samples. For this workflow, we
+will use the first six samples from each group. We quantified against
+the [GENCODE](https://www.gencodegenes.org/releases/current.html)
+human annotation version 28, which was the same reference used to
+generate the simulated reads. We used the transcript sequences FASTA
+file which contains "Nucleotide sequences of all transcripts on the
+reference chromosomes". When downloading the FASTA file, it is useful
+to download the corresponding GTF file, as this will be used in later
+sections. 
+
+To build the *Salmon* index, we used the following command:
+
+```
+salmon index -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
+```
+
+To quantify each sample, we used the following command, which uses 6
+threads, and performs fragment GC bias modeling. The library type is
+specified by `-l IU` and is discussed at this link:
+<http://salmon.readthedocs.io/en/latest/library_type.html>. The latest
+versions of Salmon can automatically detect the library type by
+setting `-l A`. Such a command can be automated in a bash loop using
+bash variables, or one can use more advanced workflow management
+systems such as Snakemake or Nextflow (cite).
+
+```
+salmon quant -p 6 -i gencode.v28_salmon-0.10.0 -l IU \
+      --gcBias -o sample -1 sample_1.fa.gz -2 sample_2.fa.gz
+```
+
+# Importing counts into R/Bioconductor
+
+We can use *tximport* to import the estimated counts, abundances and
+effective transcript lengths into R. We recommend to keep a CSV file
+that keeps track of the sample identifiers and any relevant variables,
+e.g. condition, time point, batch, and so on. Here we have made a
+sample CSV file which records which sample is condition 1 and which is
+condition 2. The columns of this CSV can have any names, although
+`sample_id` will be used later by *DRIMSeq*, and so using this column
+name allows us to pass this *data.frame* directly to *DRIMSeq* at a
+later step.
+
+```{r}
+samps <- read.csv("samples.csv")
+head(samps)
+samps$condition <- factor(samps$condition)
+table(samps$condition)
+files <- file.path("/path/to/dir", samps$sample_id, "quant.sf")
+names(files) <- samps$sample_id
+files
+```
+
+We can then import transcript-level counts using the following
+call. Here we suggest to generate counts from abundance, using the
+`scaledTPM` method described by Soneson et al (cite). As described
+above, the `countsFromAbundance` option of *tximport* uses estimated
+abundances to generate roughly count-scaled data, such that each
+column will sum to the number of reads generated for that library. One
+reason we suggest to use `scaledTPM` for differential transcript usage
+is that the estimated proportions that will be fit by *DRIMSeq* in
+following sections will correspond to proportions of abundance. 
+
+The following code chunk is not evaluated, but instead we will load a
+pre-constructed matrix of counts.
+
+```{r eval=FALSE}
+library(tximport)
+txi <- tximport(files, type="salmon", txOut=TRUE,
+                countsFromAbundance="scaledTPM")
+cts <- txi$counts
+cts <- cts[rowSums(cts) > 0,]
+```
+
+If we used the estimated counts themselves,
+or `lengthScaledTPM`, then a change in transcript usage between
+transcripts of different length could result in a changed total count
+for the gene, even if there is no change in total gene
+expression. While this could be corrected by an offset, this is not
+easily implemented in the current packages. While this workflow only
+considers existing software features, we are considering developing a new
+`countsFromAbundance` method which would scale abundance for all
+transcripts of a gene by a fixed gene length, then each sample by its
+number of reads, therefore balancing between the benefits of
+`scaledTPM` and `lengthScaledTPM`.
+
+# Transcript-to-gene mapping
+
+Bioconductor offers numerous approaches for building a *TxDb* object,
+a transcript database that can be used to link transcripts to genes.
+We used the following unevaluated code chunks to generate a *TxDb*, and
+then we will use the *data.frame* called `txdf` in following
+sections. The version 28 human GTF file was downloaded from the
+GENCODE website.
+
+```{r eval=FALSE}
+library(GenomicFeatures)
+gtf <- "gencode.v28.annotation.gtf.gz"
+txdb.filename <- "gencode.v28.annotation.sqlite"
+txdb <- makeTxDbFromGFF(gtf)
+saveDb(txdb, txdb.filename)
+```
+
+Once the *TxDb* database has been saved, it can be quickly reloaded:
+
+```{r eval=FALSE}
+txdb <- loadDb(txdb.filename)
+txdf <- select(txdb, keys(txdb, "GENEID"), "TXNAME", "GENEID")
+tab <- table(txdf$GENEID)
+txdf$ntx <- tab[match(txdf$GENEID, names(tab))]
+```
+
+# DRIMSeq
+
+```{r}
+load("salmon_cts.rda")
+head(cts)
+```
+
+```{r}
+head(txdf)
+```
+
+```{r}
+all(rownames(cts) %in% txdf$TXNAME)
+txdf <- txdf[match(rownames(cts),txdf$TXNAME),]
+```
+
+```{r}
+all(rownames(cts) == txdf$TXNAME)
+counts <- data.frame(gene_id=txdf$GENEID,
+                     feature_id=txdf$TXNAME,
+                     cts)
+```
 
 ```{r}
 library(DRIMSeq)
-rnorm(6)
+d <- dmDSdata(counts=counts, samples=samps)
 ```
+
+```{r}
+n <- 12
+n.small <- 6
+d <- dmFilter(d,
+              min_samps_feature_expr=n.small, min_feature_expr=10,
+              min_samps_feature_prop=n.small, min_feature_prop=0.1,
+              min_samps_gene_expr=n, min_gene_expr=10)
+d
+```
+
+```{r}
+design_full <- model.matrix(~condition, data=DRIMSeq::samples(d))
+colnames(design_full)
+```
+
+```{r}
+d <- d[1:250,]
+7750 / 250
+```
+
+```{r}
+set.seed(1)
+system.time({
+  d <- dmPrecision(d, design=design_full)
+  d <- dmFit(d, design=design_full)
+  d <- dmTest(d, coef="condition2")
+})
+```
+
+# stageR follwing DRIMSeq
+
+# DEXSeq
+
+```{r}
+library(DEXSeq)
+sample.data <- DRIMSeq::samples(d)
+count.data <- round(as.matrix(counts(d)[,-c(1:2)]))
+dxd <- DEXSeqDataSet(countData=count.data,
+                     sampleData=sample.data,
+                     design=~sample + exon + condition:exon,
+                     featureID=counts(d)$feature_id,
+                     groupID=counts(d)$gene_id)
+```
+
+```{r}
+system.time({
+  dxd <- estimateSizeFactors(dxd)
+  dxd <- estimateDispersions(dxd, quiet=TRUE)
+  dxd <- nbinomLRT(dxd, reduced=~sample + exon)
+})
+```
+
+# stageR follwing DEXSeq
+
+# SUPPA2
+
+# Evaluation of methods for DTU
+
+# Differential gene expression
+
+Make a plot of transcript usage over gene expression.
+
+# Evaluation of methods for DGE
+
+# Evaluation of methods for DTE
+
+# Example of references
 
 An example reference is @Patro2017Salmon and it also looks like [@Patro2017Salmon].
 

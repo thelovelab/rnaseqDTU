@@ -121,7 +121,7 @@ the following workflow. Understanding the details of the
 simulation will be useful for assessing the methods in the later sections.
 All of the code used to simulate RNA-seq experiments and write
 paired-end reads can be found at the following
-link: <https://github.com/mikelove/swimdownsim>. *alpine* was used to
+link: <https://github.com/mikelove/swimdown>. *alpine* was used to
 estimate realistic fragment GC bias from 12 samples from the GEUVADIS
 project from the same center (cite alpine and GEUVADIS). *DESeq2* was
 used to estimate mean and dispersion parameters for a Negative
@@ -139,7 +139,7 @@ transcript abundances was taken from Salmon estimates for a single
 sample of the GEUVADIS project (cite Salmon). *countsimQC* was used to
 examine the properties of the simulation relative to the dataset used
 for parameter estimation, and the full report can be accessed at the
-following link: <https://github.com/mikelove/swimdownsim/countsimqc>
+following link: <https://github.com/mikelove/swimdown/countsimqc>
 (cite countsimqc).
 
 Differential expression across two groups was generated as follows:
@@ -571,19 +571,20 @@ transcript-level tests. We found that a post-hoc filtering of the
 change in proportions brought the observed FDR closer to its nominal
 target, and so we provide example code for this filtering here:
 
-TODO fix `getDpsi`
+TODO fix `getDiffProp`
 
 ```{r}
-# this needs to be re-written to be safe to its assumptions
-getDpsi <- function(d, n.sub) {
+# this is a quick hack. before submitting, i will
+# re-write it to be safe to its assumptions and have stop()'s
+getDiffProp <- function(d, n.sub) {
   prop.d <- proportions(d)
   fitted <- subset(prop.d, select=-c(gene_id, feature_id))[,c(1,n.sub+1)]
   abs(fitted[,2] - fitted[,1])
 }
 res.txp.filt <- DRIMSeq::results(d, level="feature")
-res.txp.filt$dpsi <- getDpsi(d, 6)
-res.txp.filt$pvalue[res.txp.filt$dpsi < .1] <- 1
-res.txp.filt$adj_pvalue[res.txp.filt$dpsi < .1] <- 1
+res.txp.filt$dprop <- getDiffProp(d, 6)
+res.txp.filt$pvalue[res.txp.filt$dprop < .1] <- 1
+res.txp.filt$adj_pvalue[res.txp.filt$dprop < .1] <- 1
 ```
 
 # DEXSeq
@@ -711,7 +712,7 @@ head(dex.padj)
 
 # SUPPA2
 
-The *SUPPA2* is a command-line software package written in Python
+*SUPPA2* is a command-line software package written in Python
 which also takes as input *Salmon* quantification, and so for
 completeness we also show example commands and evaluated its
 performance on the simulated data (cite). *SUPPA2* offers a number of
@@ -766,8 +767,7 @@ python suppa.py diffSplice -m empirical -th 1 -i suppa/isoforms.ioi \
   -e suppa/group1.tpm suppa/group2.tpm -o suppa/diff_empirical
 ```
 
-We then imported the analysis results into R, and computed
-transcript-level adjusted p-values:
+We imported the analysis results into R:
 
 ```{r eval=FALSE}
 suppa <- read.delim("suppa/diff_empirical.dpsi")
@@ -775,10 +775,21 @@ names(suppa) <- c("txp.gene","dpsi","pval")
 suppa$gene <- sub(";.*", "", suppa$txp.gene)
 suppa$txp <- sub(".*;", "", suppa$txp.gene)
 suppa <- suppa[!is.nan(suppa$dpsi),]
+```
+
+The following line was used to compute transcript-level adjusted
+p-values. We noticed that *SUPPA2* had a large gain in sensitivity,
+while still controlling its FDR, if the set of transcripts examined
+were limited to those that passed the *DRIMSeq* filtering steps
+above. Therefore, before running any multiple test correction steps,
+we filtered to this subset of transcripts.
+
+```{r eval=FALSE}
+suppa <- suppa[match(res.txp$feature_id, suppa$txp),]
 suppa$padj <- p.adjust(suppa$pval, method="BH")
 ```
 
-And per-gene adjusted p-values, using *perGeneQValue* from *DEXSeq*:
+We generated per-gene adjusted p-values, using *perGeneQValue* from *DEXSeq*:
 
 ```{r eval=FALSE}
 library(DEXSeq)
@@ -794,21 +805,80 @@ suppa.g <- data.frame(gene=names(qval), qval=qval)
 We begin the evaluation by noting that the methods did not call many
 of the DGE genes as DTU. The object `dge.genes` contains the names of
 all the genes in which all the isoforms were differentially expressed
-by an equal amount (so not DTU).
+by an equal amount (so not DTU). *SUPPA2* output is not included in
+the workflow, but it only reported one of the DGE genes as DTU out of
+851 with an adjusted p-value less than 0.05.
 
 ```{r}
 res$dge <- res$gene_id %in% dge.genes
 dxr.g$dge <- dxr.g$gene %in% dge.genes
-sum(res$adj_pvalue[res$dge] < .05, na.rm=TRUE)
-sum(res$adj_pvalue < .05, na.rm=TRUE) # total at 5%
-sum(dxr.g$qval[dxr.g$dge] < .05)
-sum(dxr.g$qval < .05) # total at 5%
+with(res, table(sig=adj_pvalue < .05, dge))
+with(dxr.g, table(sig=qval < .05, dge))
+```
+
+```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
+knitr::include_graphics("figs/dtu_gene.jpeg")
+```
+
+The *iCOBRA* package was used to construct plots to assess the true
+positive rate over the false discovery rate at three nominal FDR
+thresholds: 1%, 5%, and 10% (cite).  The code for evaluating all
+methods and constructing the *iCOBRA* plots is included in the
+repository at the following
+link: <https://github.com/mikelove/swimdown>
+Above we showed an analysis for a comparison of 6 vs 6 samples.
+As we were interested in the performance at various sample sizes, we
+performed the entire analysis for *DRIMSeq*, *DEXSeq*, and *SUPPA2* at
+per-group sample sizes of 3,6,9, and 12. 
+
+At the gene-level, in terms of controlling at
+the nominal FDR, *SUPPA2* always controlled its FDR, even for the
+smallest sample size, *DEXSeq* controlled except for the 1% threshold
+in the smallest case, and *DRIMSeq* exceeded its FDR but approached
+the target for larger sample sizes (Figure
+\@ref(fig:dtu-gene)). Exceeding the nominal level by a small amount
+should be taken with sensitivity in consideration as well.
+For example, for the 6 vs 6 comparison, *DRIMSeq* had observed FDR of 12%
+at nominal 10%, meaning that for every 100 genes reported as
+containing DTU, the method reported 2 extra genes more than its
+target. *DRIMSeq* and *DEXSeq* were the most sensitive methods in
+recovering gene-level DTU in this simulation.
+
+We assessed the overall false discovery rate (OFDR) procedure
+implemented with *stageR* using gene- and transcript-level p-values
+from *DRIMSeq* and *DEXSeq*. For *DRIMSeq*, we assessed whether
+raising the p-values for transcripts with small difference in
+proportion helped to recover OFDR control. *DEXSeq* input to *stageR*
+tended to stay within the OFDR bound, and the observed OFDR for *DRIMSeq* with
+difference-in-proportion filtering lowered to less than 10% as the sample
+size increased (Figure \@ref(fig:dtu-ofdr)). Without the filtering,
+the observed OFDR for *DRIMSeq* was otherwise around 20-25%.
+
+```{r dtu-ofdr, out.width="75%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
+knitr::include_graphics("figs/ofdr.pdf")
+```
+
+Finally, we assessed the normal false discovery rate at the
+transcript-level without using stage-wise testing for all three
+methods (including post-hoc filtering option for *DRIMSeq*). Here we
+simply looked across the transcript-level adjusted p-values without
+regard for which transcripts came from which gene. *SUPPA2* again
+tended to controlled its FDR, as did *DEXSeq*. *DRIMSeq* with
+difference-in-proportion filtering approached the target FDR sample
+size increased for the 5% and 10% targets, while without filtering,
+the observed FDR was always higher than the target.
+
+```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering) and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
+knitr::include_graphics("figs/dtu_txp.jpeg")
 ```
 
 # Differential gene expression
 
+TODO: add text here to explain what you're doing
+
 ```{r eval=FALSE}
 txi.g <- tximport(files, type="salmon", tx2gene=txdf[,2:1])
+
 ``` 
 
 ```{r}
@@ -837,10 +907,17 @@ col[rownames(dres) %in% dte.genes] <- 2
 col[rownames(dres) %in% dtu.genes] <- 3
 ```
 
-```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene. Plotted are -log10 adjusted p-values for DEXSeq's test of differntial transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
+TODO: explain that the pairing of methods in the next two plots is
+fairly arbitrary
+
+```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene, and plotted are -log10 adjusted p-values for DEXSeq's test of differntial transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
 library(rafalib)
 bigpar()
-plot(-log10(dres$padj), -log10(dxr.g$qval), col=col,
+cap.padj <- pmin(-log10(dres$padj), 100)
+jitter.padj <- -log10(dxr.g$qval + 1e-16)
+jp.idx <- jitter.padj == 16
+jitter.padj[jp.idx] <- rnorm(sum(jp.idx),16,.25)
+plot(cap.padj, jitter.padj, col=col,
      xlab="Gene expression",
      ylab="Transcript usage")
 legend("topright",
@@ -897,19 +974,27 @@ legend("topright",
 
 # Evaluation of methods for DGE
 
+TODO: drop in plots
+
 # Evaluation of methods for DTE
 
+TODO: drop in plots
+
 # Discussion 
+
 This section is only required if the paper includes novel data or analyses, and should be written in the same style as a traditional discussion section.
 Please include a brief discussion of allowances made (if any) for controlling bias or unwanted sources of variability, and the limitations of any novel datasets.
 
 # Conclusions 
+
 This section is only required if the paper includes novel data or analyses, and should be written as a traditional conclusion.
 
 # Data availability 
+
 Please add details of where any datasets that are mentioned in the paper, and that have not have not previously been formally published, can be found.  If previously published datasets are mentioned, these should be cited in the references, as per usual scholarly conventions.
 
 # Software availability
+
 This section will be generated by the Editorial Office before publication. Authors are asked to provide some initial information to assist the Editorial Office, as detailed below.
 
 1. URL link to where the software can be downloaded from or used by a non-coder (AUTHOR TO PROVIDE; optional)
@@ -919,17 +1004,20 @@ This section will be generated by the Editorial Office before publication. Autho
 5. Software license (AUTHOR TO PROVIDE; required)
 
 # Author information
+
 In order to give appropriate credit to each author of an article, the individual contributions of each author to the manuscript should be detailed in this section. We recommend using author initials and then stating briefly how they contributed.
 
 # Competing interests
+
 All financial, personal, or professional competing interests for any of the authors that could be construed to unduly influence the content of the article must be disclosed and will be displayed alongside the article. If there are no relevant competing interests to declare, please add the following: 'No competing interests were disclosed'.
 
 # Grant information
+
 Please state who funded the work discussed in this article, whether it is your employer, a grant funder etc. Please do not list funding that you have that is not relevant to this specific piece of research. For each funder, please state the funder’s name, the grant number where applicable, and the individual to whom the grant was assigned. If your work was not funded by any grants, please include the line: 'The author(s) declared that no grants were involved in supporting this work.'
 
 # Acknowledgments
+
 This section should acknowledge anyone who contributed to the research or the article but who does not qualify as an author based on the criteria provided earlier (e.g. someone or an organization that provided writing assistance). Please state how they contributed; authors should obtain permission to acknowledge from all those mentioned in the Acknowledgments section.
 
-Please do not list grant funding in this section.
-
 # References
+

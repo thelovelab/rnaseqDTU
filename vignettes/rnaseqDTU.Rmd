@@ -571,7 +571,10 @@ transcript-level tests. We found that a post-hoc filtering of the
 change in proportions brought the observed FDR closer to its nominal
 target, and so we provide example code for this filtering here:
 
+TODO fix `getDpsi`
+
 ```{r}
+# this needs to be re-written to be safe to its assumptions
 getDpsi <- function(d, n.sub) {
   prop.d <- proportions(d)
   fitted <- subset(prop.d, select=-c(gene_id, feature_id))[,c(1,n.sub+1)]

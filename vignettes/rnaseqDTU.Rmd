@@ -464,6 +464,15 @@ res$pvalue <- no.na(res$pvalue)
 res.txp$pvalue <- no.na(res.txp$pvalue)
 ```
 
+We can plot the estimated proportions for one of the significant
+genes, where we can see evidence of switching.
+
+```{r plotProp, out.width="50%", fig.cap="Estimated proportions for one of the significant genes."}
+idx <- which(res$adj_pvalue < 0.05)[1]
+res[idx,]
+plotProportions(d, res$gene_id[idx], "condition")
+```
+
 # stageR following DRIMSeq
 
 Because we have been working with only a subset of the data, we now
@@ -517,22 +526,50 @@ for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
 ```
 
 The following functions then perform the analysis. We must specify an
-`alpha` which will the false discovery rate target for the
-analysis. Unlike adjusted p-values or q-values, we cannot choose an
-arbitrary threshold later, after specifying `alpha=0.05`, we need to
-use 5% as the target in downstream steps.
+`alpha` which will the *overall false discovery rate* target for the
+analysis, which will be defined below. Unlike typical adjusted p-values or
+q-values, we cannot choose an arbitrary threshold later: after
+specifying `alpha=0.05`, we need to use 5% as the target in downstream
+steps. There are also convenience functions *getSignificantGenes* and
+*getSignificantTx* which are shown in the *stageR* vignette.
 
 ```{r}
+library(stageR)
 stageRObj <- stageRTx(pScreen=pScreen, pConfirmation=pConfirmation,
                       pScreenAdjusted=FALSE, tx2gene=tx2gene)
 stageRObj <- stageWiseAdjustment(object=stageRObj, method="dtu", alpha=0.05)
 suppressWarnings({
-  drim.padj <- getAdjustedPValues(stageRObj, order=FALSE, onlySignificantGenes=TRUE)
+  drim.padj <- getAdjustedPValues(stageRObj, order=FALSE,
+                                  onlySignificantGenes=TRUE)
 })
 head(drim.padj)
 ```
 
+The final table with adjusted p-values summarizes the information from
+the two stage analysis. Only genes which passed the filter are
+included in the table, so the table already represents *screened* genes. 
+The transcripts with `transcript` less than 0.05 pass the
+*confirmation* stage and have a target 5% *overall false
+discovery rate*, or OFDR. This means that, in expectation, no more
+than 5% of the genes that pass screening will either (1) not contain
+any DTU, so be falsely screened genes, or (2) contain a transcript with a
+transcript adjusted p-value less than 0.05 which does not participate
+in DTU, so contain a falsely confirmed transcript. The *stageR*
+procedure allows us to look at both the genes that passed the
+screening stage and the transcripts with adjusted p-values less than 
+our target `alpha`, and understand what kind of *overall* error rate
+this procedure entails. This cannot be said for an arbitrary procedure
+of looking at simple gene adjusted p-values and transcript adjusted
+p-values, where the adjustment was performed independently.
+
 # Filtering on the change in proportions
+
+We found that *DRIMSeq* was sensitive to detect DTU, but could exceed
+its FDR bounds if we considered either the gene-level tests or the
+transcript-level tests. We found that a post-hoc filtering of the
+*DRIMSeq* results table to exclude transcripts with small estimated
+change in proportions brought the observed FDR closer to its nominal
+target, and so we provide example code for this filtering here:
 
 ```{r}
 getDpsi <- function(d, n.sub) {
@@ -540,16 +577,50 @@ getDpsi <- function(d, n.sub) {
   fitted <- subset(prop.d, select=-c(gene_id, feature_id))[,c(1,n.sub+1)]
   abs(fitted[,2] - fitted[,1])
 }
-res.txp$dpsi <- getDpsi(d, 6)
-res.txp.filt <- res.txp
+res.txp.filt <- DRIMSeq::results(d, level="feature")
+res.txp.filt$dpsi <- getDpsi(d, 6)
 res.txp.filt$pvalue[res.txp.filt$dpsi < .1] <- 1
 res.txp.filt$adj_pvalue[res.txp.filt$dpsi < .1] <- 1
 ```
 
-
 # DEXSeq
 
-```{r}
+The *DEXSeq* package was originally designed for detecting
+differential exon usage (cite), but can also be adapted to run on estimated
+transcript counts from Salmon, in order to detect DTU. This
+usage of *DEXSeq* was evaluated by (cite Soneson isoform filtering) in a
+publication discussing the benefits in terms of FDR control of
+filtering lowly expressed transcripts for a transcript-level
+analysis. As the usage is quite different than its intended usage, we
+also benchmarked its performance here. We begin with the *DRIMSeq*
+filtered object, as these filters are intuitive and useful for paring
+down the analysis. 
+
+The two factors of working on isoform counts rather than
+individual exons and using the *DRIMSeq* filtering options
+dramatically increase the speed of *DEXSeq*, compared to running an
+exon-level analysis. Another advantage is that we can benefit from
+the sophisticated bias models of *Salmon*, which account for dips in
+coverage on alternative exons that can otherwise throw off estimates
+of transcript abundance. A disadvantage over the exon-level analysis
+is that we must know in advance all of the possible isoforms that can
+be generated from a gene locus, all of which are assumed to be
+contained in the annotation files.
+
+We first load the DEXSeq package and then build a *DEXSeqDataSet* from
+the data contained in the *dmDStest* object (the class of the
+*DRIMSeq* object changes as the results are added). The design formula
+of the *DEXSeqDataSet* here uses the language "exon" but this should
+be read as "transcript" for our analysis. *DEXSeq* will test, after
+accounting for total gene expression for this gene and for the
+proportion of this transcript relative to the others, whether there is
+a condition-specific difference in the transcript proportion relative
+to the others. The testing of "this" vs "others" in *DEXSeq* enables
+it to be much faster than its original published version, which
+involved fitting coefficients for each exon within a gene (here it
+would have been for each transcript within a gene).
+
+```{r messages=FALSE}
 library(DEXSeq)
 sample.data <- DRIMSeq::samples(d)
 count.data <- round(as.matrix(counts(d)[,-c(1:2)]))
@@ -560,6 +631,10 @@ dxd <- DEXSeqDataSet(countData=count.data,
                      groupID=counts(d)$gene_id)
 ```
 
+The following functions run the *DEXSeq* analysis. While we are only
+working on a subset of the data, the full analysis for this dataset
+took less than 3 minutes on a laptop.
+
 ```{r}
 system.time({
   dxd <- estimateSizeFactors(dxd)
@@ -568,15 +643,147 @@ system.time({
 })
 ```
 
-# stageR follwing DEXSeq
+We then extract the results table, not filtering on mean counts (as we
+have already conducted filtering via *DRIMSeq* functions. We compute a
+per-gene adjusted p-value, using the *perGeneQValue* function, which
+aggregates evidence from multiple tests within a gene to a single
+p-value for the gene and then corrects for multiple testing across
+genes (cite DEXSeq). Finally, we build a simple results table with the
+per-gene adjusted p-values.
+
+```{r}
+dxr <- DEXSeqResults(dxd, independentFiltering=FALSE)
+qval <- perGeneQValue(dxr)
+dxr.g <- data.frame(gene=names(qval),qval)
+```
+
+For size consideration, we reduce to a simple *data.frame* for the
+transcript-level results table:
+
+```{r}
+columns <- c("featureID","groupID","pvalue")
+dxr <- as.data.frame(dxr[,columns])
+```
+
+# stageR following DEXSeq
+
+Again, as we have been working with only a subset of the data, we now
+load the results tables that would have been generated by running
+*DEXSeq* functions on the entire dataset.
+
+```{r}
+load("dex_tables.rda")
+```
+
+If the *stageR* package has not already been loaded, we make sure to
+load it, and run code very similar to that used above for *DRIMSeq*
+two stage testing, with a target `alpha=0.05`.
+
+```{r}
+library(stageR)
+strp <- function(x) substr(x,1,15)
+pConfirmation <- matrix(dxr$pvalue,ncol=1)
+dimnames(pConfirmation) <- list(strp(dxr$featureID),"transcript")
+pScreen <- qval
+names(pScreen) <- strp(names(pScreen))
+tx2gene <- as.data.frame(dxr[,c("featureID", "groupID")])
+for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
+```
+
+The following three functions provide a table with the OFDR control
+described above. To repeat, the set of genes passing screening should
+not have more than 5% of either genes which have no DTU or genes which
+contain a transcript with an adjusted p-value less than 5% which do
+not participate in DTU.
+
+```{r}
+stageRObj <- stageRTx(pScreen=pScreen, pConfirmation=pConfirmation,
+                      pScreenAdjusted=TRUE, tx2gene=tx2gene)
+stageRObj <- stageWiseAdjustment(object=stageRObj, method="dtu", alpha=0.05)
+suppressWarnings({
+  dex.padj <- getAdjustedPValues(stageRObj, order=FALSE, onlySignificantGenes=TRUE)
+})
+head(dex.padj)
+```
 
 # SUPPA2
 
+The *SUPPA2* is a command-line software package written in Python
+which also takes as input *Salmon* quantification, and so for
+completeness we also show example commands and evaluated its
+performance on the simulated data (cite). *SUPPA2* offers a number of
+distinct features, including the ability to translate from *Salmon*
+transcript-level quantifications to individual splicing events, which
+are cataloged using a specific vocabulary described in the software
+usage guide: <https://github.com/comprna/SUPPA>. *SUPPA2* additionally
+offers differential analysis on the splicing events, which may be more
+valuable to investigators than per-transcript, depending on the system
+and research goals (similar to the primary exon-level primary use case of
+*DEXSeq*). 
+
+Here, as our DTU simulation involved switching between
+expressed transcripts without assessing whether they were separated by
+one or more splice events, and as the other two Bioconductor methods
+for detecting DTU involve transcript-level analysis, we ran *SUPPA2*
+in its differential transcript usage mode. We chose to filter on
+transcripts with TPM larger than 1, and did not use gene-correction,
+as we wanted to apply the aggregation and correction method
+`perGeneQValue` from *DEXSeq* to obtain an FDR bounded set of genes
+and transcripts as output. We did not perform the stage-wise analysis
+of *SUPPA2* output, although this could be done by small modifications
+to the above code for either *DRIMSeq* or *DEXSeq*.
+
+We used the following R code to prepare two files containing
+TPM estimates for each of the two groups, using the *tximport* object
+defined above:
+
+```{r eval=FALSE}
+x <- txi$abundance
+x[x < 0.01] <- 0 # eliminate very small TPMs
+n <- 6 # sample size per group
+write.table(x[,1:n], file=paste0("suppa/group1.tpm"), quote=FALSE, sep="\t")
+write.table(x[,n + 1:n], file=paste0("suppa/group2.tpm"), quote=FALSE, sep="\t")
+```
+
+The *SUPPA2* example code can be found at the software homepage, but
+we include here the code used on the 6 vs 6 analysis. The first line
+generates a set of isoforms from the GTF file. The second and third
+line generate PSI (percent spliced in) for each transcript from files
+containing the TPMs for each group. The final line performs the
+differential analysis.
+
+```
+python suppa.py generateEvents -f ioi -i gencode.v28.annotation.gtf -o suppa/isoforms
+python suppa.py psiPerIsoform -g gencode.v28.annotation.gtf \
+  -e suppa/group1.tpm -o suppa/group1
+python suppa.py psiPerIsoform -g gencode.v28.annotation.gtf \
+  -e suppa/group2.tpm -o suppa/group2
+python suppa.py diffSplice -m empirical -th 1 -i suppa/isoforms.ioi \
+  -p suppa/group1_isoform.psi suppa/group2_isoform.psi \
+  -e suppa/group1.tpm suppa/group2.tpm -o suppa/diff_empirical
+```
+
 # Evaluation of methods for DTU
+
+We begin the evaluation by noting that the methods did not call many
+of the DGE genes as DTU. The object `dge.genes` contains the names of
+all the genes in which all the isoforms were differentially expressed
+by an equal amount (so not DTU).
+
+```{r}
+res$dge <- res$gene_id %in% dge.genes
+dxr.g$dge <- dxr.g$gene %in% dge.genes
+sum(res$adj_pvalue[res$dge] < .05, na.rm=TRUE)
+sum(res$adj_pvalue < .05, na.rm=TRUE) # total at 5%
+sum(dxr.g$qval[dxr.g$dge] < .05)
+sum(dxr.g$qval < .05) # total at 5%
+```
 
 # Differential gene expression
 
-Make a plot of transcript usage over gene expression.
+Show code for doing DGE, tximport followed by DESeq2 and edgeR
+
+Make a plot of gene-level transcript usage over total expression log10 p-values
 
 # Evaluation of methods for DGE
 

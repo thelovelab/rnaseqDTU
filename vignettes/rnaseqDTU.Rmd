@@ -65,10 +65,10 @@ Others can be found at the following link:
 Previously, some of the developers of the Bioconductor packages
 *edgeR* and *DESeq2* (cite) have collaborated to develop the
 *tximport* package (cite) for summarizing the output of fast
-transcript-level quantifiers, such as *Salmon*, *Sailfish*, and
-*kallisto* (cite). The *tximport* package focuses on preparing
-estimated transcript-level quantities, counts, abundances and
-effective transcript lengths, for gene-level statistical analysis
+transcript-level quantifiers, such as *Salmon* [@Patro2017Salmon],
+*Sailfish*, and *kallisto* (cite). The *tximport* package focuses on
+preparing estimated transcript-level quantities, counts, abundances
+and effective transcript lengths, for gene-level statistical analysis
 using *edgeR*, *DESeq* or *limma-voom* (cite). *tximport* produces an
 offset matrix to accompany gene-level counts, that accounts for
 various RNA-seq biases (cite Salmon) as well as differences in
@@ -78,7 +78,7 @@ Trapnell). *tximport* can alternatively produce a matrix of data that
 is roughly on the scale of counts, by scaling abundances to add up to
 the total number of reads, which directly corrects for technical
 biases and differential transcript usage across samples, obviating the
-need for the accompanying offset matrix. 
+need for the accompanying offset matrix.
 
 Complementary to an analysis of differential gene expression, one can
 use *tximport* to import transcript-level counts, and then pass these
@@ -163,7 +163,7 @@ isoforms, or if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
 genes counted for DTU, but not for DGE.
 
-```{r ma-simulated, messages=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap = "MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis."}
+```{r ma-simulated, messages=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which were expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), and 23\\% are differentially expressed (green, orange, or purple)."}
 load("simulate.rda")
 library(rafalib)
 bigpar()
@@ -533,7 +533,7 @@ specifying `alpha=0.05`, we need to use 5% as the target in downstream
 steps. There are also convenience functions *getSignificantGenes* and
 *getSignificantTx* which are shown in the *stageR* vignette.
 
-```{r}
+```{r message=FALSE}
 library(stageR)
 stageRObj <- stageRTx(pScreen=pScreen, pConfirmation=pConfirmation,
                       pScreenAdjusted=FALSE, tx2gene=tx2gene)
@@ -623,7 +623,7 @@ it to be much faster than its original published version, which
 involved fitting coefficients for each exon within a gene (here it
 would have been for each transcript within a gene).
 
-```{r messages=FALSE}
+```{r message=FALSE}
 library(DEXSeq)
 sample.data <- DRIMSeq::samples(d)
 count.data <- round(as.matrix(counts(d)[,-c(1:2)]))
@@ -766,6 +766,29 @@ python suppa.py diffSplice -m empirical -th 1 -i suppa/isoforms.ioi \
   -e suppa/group1.tpm suppa/group2.tpm -o suppa/diff_empirical
 ```
 
+We then imported the analysis results into R, and computed
+transcript-level adjusted p-values:
+
+```{r eval=FALSE}
+suppa <- read.delim("suppa/diff_empirical.dpsi")
+names(suppa) <- c("txp.gene","dpsi","pval")
+suppa$gene <- sub(";.*", "", suppa$txp.gene)
+suppa$txp <- sub(".*;", "", suppa$txp.gene)
+suppa <- suppa[!is.nan(suppa$dpsi),]
+suppa$padj <- p.adjust(suppa$pval, method="BH")
+```
+
+And per-gene adjusted p-values, using *perGeneQValue* from *DEXSeq*:
+
+```{r eval=FALSE}
+library(DEXSeq)
+suppa.dxr <- as(DataFrame(groupID=suppa$gene,
+                          pvalue=suppa$pval,
+                          padj=rep(1, nrow(suppa))), "DEXSeqResults")
+qval <- perGeneQValue(suppa.dxr)
+suppa.g <- data.frame(gene=names(qval), qval=qval)
+```
+
 # Evaluation of methods for DTU
 
 We begin the evaluation by noting that the methods did not call many
@@ -792,8 +815,37 @@ Make a plot of gene-level transcript usage over total expression log10 p-values
 
 # Evaluation of methods for DTE
 
-# Example of references
+# Discussion 
+This section is only required if the paper includes novel data or analyses, and should be written in the same style as a traditional discussion section.
+Please include a brief discussion of allowances made (if any) for controlling bias or unwanted sources of variability, and the limitations of any novel datasets.
 
-An example reference is @Patro2017Salmon and it also looks like [@Patro2017Salmon].
+# Conclusions 
+This section is only required if the paper includes novel data or analyses, and should be written as a traditional conclusion.
+
+# Data availability 
+Please add details of where any datasets that are mentioned in the paper, and that have not have not previously been formally published, can be found.  If previously published datasets are mentioned, these should be cited in the references, as per usual scholarly conventions.
+
+# Software availability
+This section will be generated by the Editorial Office before publication. Authors are asked to provide some initial information to assist the Editorial Office, as detailed below.
+
+1. URL link to where the software can be downloaded from or used by a non-coder (AUTHOR TO PROVIDE; optional)
+2. URL link to the author's version control system repository containing the source code (AUTHOR TO PROVIDE; required)
+3. Link to source code as at time of publication (*F1000Research* TO GENERATE)
+4. Link to archived source code as at time of publication (*F1000Research* TO GENERATE)
+5. Software license (AUTHOR TO PROVIDE; required)
+
+# Author information
+In order to give appropriate credit to each author of an article, the individual contributions of each author to the manuscript should be detailed in this section. We recommend using author initials and then stating briefly how they contributed.
+
+# Competing interests
+All financial, personal, or professional competing interests for any of the authors that could be construed to unduly influence the content of the article must be disclosed and will be displayed alongside the article. If there are no relevant competing interests to declare, please add the following: 'No competing interests were disclosed'.
+
+# Grant information
+Please state who funded the work discussed in this article, whether it is your employer, a grant funder etc. Please do not list funding that you have that is not relevant to this specific piece of research. For each funder, please state the funder’s name, the grant number where applicable, and the individual to whom the grant was assigned. If your work was not funded by any grants, please include the line: 'The author(s) declared that no grants were involved in supporting this work.'
+
+# Acknowledgments
+This section should acknowledge anyone who contributed to the research or the article but who does not qualify as an author based on the criteria provided earlier (e.g. someone or an organization that provided writing assistance). Please state how they contributed; authors should obtain permission to acknowledge from all those mentioned in the Acknowledgments section.
+
+Please do not list grant funding in this section.
 
 # References

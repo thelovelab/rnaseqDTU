@@ -390,7 +390,7 @@ d
 
 The following plot gives a useful overview:
 
-```{r datahist, out.width="50%", fig.cap="Histogram of the number of genes by number of transcipts."}
+```{r data-hist, out.width="50%", fig.cap="Histogram of the number of genes by number of transcipts."}
 plotData(d)
 ```
 
@@ -467,7 +467,7 @@ res.txp$pvalue <- no.na(res.txp$pvalue)
 We can plot the estimated proportions for one of the significant
 genes, where we can see evidence of switching.
 
-```{r plotProp, out.width="50%", fig.cap="Estimated proportions for one of the significant genes."}
+```{r plot-prop, out.width="50%", fig.cap="Estimated proportions for one of the significant genes."}
 idx <- which(res$adj_pvalue < 0.05)[1]
 res[idx,]
 plotProportions(d, res$gene_id[idx], "condition")
@@ -807,9 +807,93 @@ sum(dxr.g$qval < .05) # total at 5%
 
 # Differential gene expression
 
-Show code for doing DGE, tximport followed by DESeq2 and edgeR
+```{r eval=FALSE}
+txi.g <- tximport(files, type="salmon", tx2gene=txdf[,2:1])
+``` 
 
-Make a plot of gene-level transcript usage over total expression log10 p-values
+```{r}
+load("salmon_gene_txi.rda")
+library(DESeq2)
+dds <- DESeqDataSetFromTximport(txi.g, samps, ~condition)
+```
+
+```{r message=FALSE}
+dds <- DESeq(dds)
+dres <- DESeq2::results(dds)
+```
+
+```{r}
+length(dtu.genes)
+table(rownames(dres)[which(dres$padj < .05)] %in% dtu.genes)
+```
+
+```{r}
+all(dxr.g$gene %in% rownames(dres))
+dres <- dres[dxr.g$gene,]
+# we can only color because we simulated...
+col <- rep(8, nrow(dres))
+col[rownames(dres) %in% dge.genes] <- 1
+col[rownames(dres) %in% dte.genes] <- 2
+col[rownames(dres) %in% dtu.genes] <- 3
+```
+
+```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene. Plotted are -log10 adjusted p-values for DEXSeq's test of differntial transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
+library(rafalib)
+bigpar()
+plot(-log10(dres$padj), -log10(dxr.g$qval), col=col,
+     xlab="Gene expression",
+     ylab="Transcript usage")
+legend("topright",
+       c("DGE","DTE","DTU","null"),
+       col=c(1:3,8), pch=20, bty="n")
+```
+
+```{r message=FALSE}
+library(edgeR)
+cts.g <- txi.g$counts
+normMat <- txi.g$length
+normMat <- normMat / exp(rowMeans(log(normMat)))
+o <- log(calcNormFactors(cts.g/normMat)) + log(colSums(cts.g/normMat))
+y <- DGEList(cts.g)
+y <- scaleOffset(y, t(t(log(normMat)) + o))
+keep <- filterByExpr(y)
+y <- y[keep,]
+```
+
+```{r}
+y <- estimateDisp(y, design_full)
+fit <- glmFit(y, design_full)
+lrt <- glmLRT(fit)
+tt <- topTags(lrt, n=nrow(y), sort="none")[[1]]
+```
+
+```{r}
+table(rownames(tt)[which(tt$FDR < .05)] %in% dtu.genes)
+```
+
+```{r}
+common <- intersect(res$gene_id, rownames(tt))
+tt <- tt[common,]
+res.sub <- res[match(common, res$gene_id),]
+# we can only color because we simulated...
+col <- rep(8, nrow(tt))
+col[rownames(tt) %in% dge.genes] <- 1
+col[rownames(tt) %in% dte.genes] <- 2
+col[rownames(tt) %in% dtu.genes] <- 3
+```
+
+```{r tuge-drim-edger, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot, as previously, but for DRIMSeq and edgeR."}
+library(rafalib)
+bigpar()
+plot(-log10(tt$FDR), -log10(res.sub$adj_pvalue), col=col,
+     xlab="Gene expression",
+     ylab="Transcript usage")
+legend("topright",
+       c("DGE","DTE","DTU","null"),
+       col=c(1:3,8), pch=20, bty="n")
+```
+
+
 
 # Evaluation of methods for DGE
 

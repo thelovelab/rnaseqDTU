@@ -163,7 +163,7 @@ isoforms, or if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
 genes counted for DTU, but not for DGE.
 
-```{r ma-simulated, echo=FALSE, dev="png", out.width="50%", fig.cap = "MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis."}
+```{r ma-simulated, messages=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap = "MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis."}
 load("simulate.rda")
 library(rafalib)
 bigpar()
@@ -243,7 +243,7 @@ samps$condition <- factor(samps$condition)
 table(samps$condition)
 files <- file.path("/path/to/dir", samps$sample_id, "quant.sf")
 names(files) <- samps$sample_id
-files
+head(files)
 ```
 
 We can then import transcript-level counts using the following
@@ -286,7 +286,7 @@ a transcript database that can be used to link transcripts to genes.
 We used the following unevaluated code chunks to generate a *TxDb*, and
 then we will use the *data.frame* called `txdf` in following
 sections. The version 28 human GTF file was downloaded from the
-GENCODE website.
+GENCODE website when we downloaded the transcripts FASTA file.
 
 ```{r eval=FALSE}
 library(GenomicFeatures)
@@ -307,31 +307,76 @@ txdf$ntx <- tab[match(txdf$GENEID, names(tab))]
 
 # DRIMSeq
 
+We load the `cts` object as created in the code chunk above. This
+contains count-scale data, generated from abundance using the
+`scaledTPM` method. The column sums are equal to the number of
+paired-end reads per experiment. The experiments have between 31 and
+38 million paired-end reads that were mapped to the transcriptome
+using *Salmon*.
+
 ```{r}
 load("salmon_cts.rda")
-head(cts)
+cts[1:3,1:3]
+range(colSums(cts)/1e6)
 ```
 
+We also have the `txdf` object giving the transcript-to-gene
+mappings. This is contained in a file called `simulate.rda` that
+contains a number of R objects with information about the
+simulation, that we will use later to assess the methods'
+performance. 
+
 ```{r}
+load("simulate.rda")
 head(txdf)
-```
-
-```{r}
 all(rownames(cts) %in% txdf$TXNAME)
 txdf <- txdf[match(rownames(cts),txdf$TXNAME),]
+all(rownames(cts) == txdf$TXNAME)
 ```
 
+In order to run *DRIMSeq* we build a *data.frame* with the gene ID,
+the feature ID, and then columns for each of the samples:
+
 ```{r}
-all(rownames(cts) == txdf$TXNAME)
 counts <- data.frame(gene_id=txdf$GENEID,
                      feature_id=txdf$TXNAME,
                      cts)
 ```
 
+We can now load the DRIMSeq package and create a *dmDSdata* object,
+with our `counts` and `samps` *data.frames*. Typing in the object name
+and pressing return will give information about the number of genes:
+
 ```{r}
 library(DRIMSeq)
 d <- dmDSdata(counts=counts, samples=samps)
+d
 ```
+
+The *dmDSdata* object has a number of specific methods. Note that the
+rows of the object are gene-oriented, so pulling out the first *row*
+corresponds to all of the transcripts of the first gene:
+
+```{r}
+methods(class=class(d))
+counts(d[1,])[,1:4]
+```
+
+It will be useful to first filter the object, before running
+procedures to estimate model parameters. It greatly speeds up the
+fitting and removes transcripts which would be troublesome for
+parameter estimation, e.g. estimating the proportion of expression
+among the transcripts of a gene when the total count is very low. We first
+define `n` to be the total number of samples, and `n.small` to be the
+sample size of the smallest group. We use all
+three of the possible filters: we require that (1) at least `n.small`
+samples have a count of 10, for a transcript to be included in the
+dataset, (2) at least `n.small` samples have a proportion of 0.1 or
+larger, and (3) that all `n` samples have a total count of 10 or
+more. If `n` was large, it would make sense to allow perhaps a few
+samples to have very low counts, so lowering `min_samps_gene_expr` to
+some multiple of `n`, likewise for the first two filters. After
+filtering, the dataset has only 7,764 genes.
 
 ```{r}
 n <- 12
@@ -343,15 +388,49 @@ d <- dmFilter(d,
 d
 ```
 
+The following plot gives a useful overview:
+
+```{r datahist, out.width="50%", fig.cap="Histogram of the number of genes by number of transcipts."}
+plotData(d)
+```
+
+We create a design matrix, using a design formula and the sample
+information contained in the object, accessed via *samples*. Here we
+use a simple design with just two groups, but more complex designs are
+possible. For some discussion of complex designs, one can reference
+the vignettes of the *limma*, *edgeR*, or *DESeq2* packages.
+
 ```{r}
 design_full <- model.matrix(~condition, data=DRIMSeq::samples(d))
 colnames(design_full)
 ```
 
+Only for speeding up the code evaluations in this workflow, we subset
+to the first 250 genes, representing about one thirtieth of the
+dataset. This step would not be run in a typical workflow.
+
 ```{r}
 d <- d[1:250,]
 7750 / 250
 ```
+
+We then use the following three functions to estimate the model
+parameters. We first estimate the *precision*, which is related to the
+dispersion in the Negative Binomial via the formula below. Because
+precision is in the denominator of the right hand side of the
+equation, they are inversely related. Higher *dispersion* -- counts more
+variable around their expected value -- is associated with lower
+*precision*. For full details about the DRIMSeq model, one should read
+both the DRIMSeq software vignette and the DRIMSeq publication
+(cite). After estimating the precision, we fit regression coefficients
+and perform null hypothesis testing on the coefficient of
+interest. Because we have a simple two-group model, we test the
+coefficient associated with the difference between condition 2 and
+condition 1, called `condition2`. The following code takes about half
+a minute, and so a full analysis on this dataset takes about 15
+minutes on a laptop.
+
+\[ \textrm{dispersion} = \frac{1}{1 + \textrm{precision}} \]
 
 ```{r}
 set.seed(1)
@@ -362,7 +441,111 @@ system.time({
 })
 ```
 
-# stageR follwing DRIMSeq
+To build a results table, we run the `results` function. We can
+generate a single p-value per gene, which tests whether there is any
+differential transcript usage, or a single p-value per transcript,
+which tests whether the proportions for this transcript changed within
+the gene:
+
+```{r}
+res <- DRIMSeq::results(d)
+head(res)
+res.txp <- DRIMSeq::results(d, level="feature")
+head(res.txp)
+```
+
+Because the `pvalue` column may contain `NA` values, we use the
+following function to turn these into 1's. The `NA` values would
+otherwise cause problems for the stage-wise analysis.
+
+```{r}
+no.na <- function(x) ifelse(is.na(x), 1, x)
+res$pvalue <- no.na(res$pvalue)
+res.txp$pvalue <- no.na(res.txp$pvalue)
+```
+
+# stageR following DRIMSeq
+
+Because we have been working with only a subset of the data, we now
+load the results tables that would have been generated by running
+*DRIMSeq* functions on the entire dataset.
+
+```{r}
+load("drim_tables.rda")
+nrow(res)
+nrow(res.txp)
+```
+
+A typical analysis of differential transcript usage would involve
+asking first: "which genes contain any evidence of DTU?", and secondly
+"which transcripts in the genes that contain some evidence may be
+participating in the DTU?". Note that a gene may pass the first
+stage, although there is not enough evidence to identify one or more
+transcripts that are participating. The *stageR* package is designed
+to allow for such two-stage testing procedures, where the first stage
+is called a *screening* stage and the second stage a *confirmation*
+stage (cite). The methods are general, and can also be applied to
+testing, for example changes across a time series followed by
+investigation of individual timepoints, as shown in the *stageR*
+package vignette. We show below how *stageR* is used to detect DTU and
+how to interpret its output.
+
+We first construct a vector of p-values for the screening
+stage. Because of how the *stageR* package will combine transcript and
+gene names, we need to strip the gene and transcript version numbers
+from their Ensembl IDs (so taking the first 15 characters).
+
+```{r}
+pScreen <- res$pvalue
+strp <- function(x) substr(x,1,15)
+names(pScreen) <- strp(res$gene_id)
+```
+
+We construct a one column matrix of the confirmation p-values:
+
+```{r}
+pConfirmation <- matrix(res.txp$pvalue, ncol=1)
+rownames(pConfirmation) <- strp(res.txp$feature_id)
+```
+
+We arrange a two column *data.frame* with the transcript and gene
+identifiers.
+
+```{r}
+tx2gene <- res.txp[, c("feature_id", "gene_id")]
+for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
+```
+
+The following functions then perform the analysis. We must specify an
+`alpha` which will the false discovery rate target for the
+analysis. Unlike adjusted p-values or q-values, we cannot choose an
+arbitrary threshold later, after specifying `alpha=0.05`, we need to
+use 5% as the target in downstream steps.
+
+```{r}
+stageRObj <- stageRTx(pScreen=pScreen, pConfirmation=pConfirmation,
+                      pScreenAdjusted=FALSE, tx2gene=tx2gene)
+stageRObj <- stageWiseAdjustment(object=stageRObj, method="dtu", alpha=0.05)
+suppressWarnings({
+  drim.padj <- getAdjustedPValues(stageRObj, order=FALSE, onlySignificantGenes=TRUE)
+})
+head(drim.padj)
+```
+
+# Filtering on the change in proportions
+
+```{r}
+getDpsi <- function(d, n.sub) {
+  prop.d <- proportions(d)
+  fitted <- subset(prop.d, select=-c(gene_id, feature_id))[,c(1,n.sub+1)]
+  abs(fitted[,2] - fitted[,1])
+}
+res.txp$dpsi <- getDpsi(d, 6)
+res.txp.filt <- res.txp
+res.txp.filt$pvalue[res.txp.filt$dpsi < .1] <- 1
+res.txp.filt$adj_pvalue[res.txp.filt$dpsi < .1] <- 1
+```
+
 
 # DEXSeq
 

@@ -57,7 +57,7 @@ differential transcript usage is still of interest to biological and
 biomedical researchers. While many tutorials and workflows in the
 Bioconductor project address differential gene expression, there are
 fewer workflows for performing a differential transcript usage analysis,
-which provides critical and complementary information to a the
+which provides critical and complementary information to a 
 gene-level analysis. Some of the existing Bioconductor packages and vignettes that 
 can be used to detect differential transcript usage include *BitSeq*, 
 *DEXSeq* (originally designed for differential exon usage), `diffSpliceDGE` 
@@ -70,7 +70,7 @@ infrastructure, please refer to the (cite latest Bioc paper).
 
 We note that there are numerous other methods for detecting
 differential transcript usage outside of the Bioconductor project. The
-*DRIMSeq* publication is a good reference and has descriptions and
+*DRIMSeq* publication (cite) is a good reference and has descriptions and
 comparisons with many such methods.
 This workflow will build on the methods and vignettes from three
 Bioconductor packages: *DRIMSeq*, *DEXSeq*, and *stageR*.
@@ -125,7 +125,7 @@ transcript usage, as well as differential gene and transcript
 expression. The simulation was constructed using experimental
 parameters estimated from the GEUVADIS dataset (cite), including the
 expression levels of the transcripts, the amount of biological
-variability of expression level across samples, and realistic coverage
+variability of expression levels across samples, and realistic coverage
 of reads along the transcript.
 
 # Methods
@@ -139,10 +139,10 @@ All of the code used to simulate RNA-seq experiments and write
 paired-end reads can be found at the following
 link: <https://github.com/mikelove/swimdown>. 
 *Salmon* was used to estimate transcript-level abundances for a single
-sample of the GEUVADIS project (cite GEUVADIS, Salmon), and this was used a
-baseline for transcript abundances in the simulation.
+sample **NOTE: which specific sample** of the GEUVADIS project (cite GEUVADIS, Salmon), and this was used as
+a baseline for transcript abundances in the simulation.
 *alpine* was used to estimate realistic fragment GC bias from 12 samples from the GEUVADIS
-project from the same center (cite alpine). *DESeq2* was
+project from the same center [@Love2016Alpine]. *DESeq2* was
 used to estimate mean and dispersion parameters for a Negative
 Binomial distribution for gene-level counts for 462 GEUVADIS samples
 provided by the *recount2* project (cite DESeq2, recount2).
@@ -171,20 +171,20 @@ Differential expression across two groups was generated as follows:
 70% of the genes were set as "null genes", where abundance was not
 changed across the two groups. For 10% of genes, all isoforms were
 differentially expressed at a log fold change between 1 and 2.58. This
-set of genes and transcripts were classified as "DGE", differential
-gene expression, but did not count as "DTU", differential transcript
-usage. To simulate balanced differential expression, randomly one of
-the two groups was chosen to be the baseline, and the other group
+set of genes and transcripts were classified as "DGE" (differential
+gene expression) but did not count as "DTU" (differential transcript
+usage). To simulate balanced differential expression, one of
+the two groups was randomly chosen to be the baseline, and the other group
 would have its counts multiplied by the fold change. For 10% of genes,
 a single expressed isoform was differentially expressed at a log fold
-change between 1 and 2.58. This set of genes was termed "DTE",
-differential transcript expression. If the chosen transcript was the
+change between 1 and 2.58. This set of genes was termed "DTE" (
+differential transcript expression). If the chosen transcript was the
 only expressed isoform of a gene, this counted as DGE and not DTU,
 but if there were other isoforms which are expressed, such genes
 counted for both DGE and DTU, as the proportion of expression among
 the isoforms was affected. For 10% of genes, differential transcript
 usage was constructed by exchanging the abundance of two expressed
-isoforms, or if only one isoform was expressed, exchanging the
+isoforms, or, if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
 genes counted for DTU, but not for DGE. An MA plot of the simulated
 abundances for the two groups is shown in Figure
@@ -242,11 +242,11 @@ salmon index -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
 To quantify each sample, we used the following command, which uses 6
 threads, and performs fragment GC bias modeling. The library type is
 specified by `-l IU` and is discussed at this link:
-<http://salmon.readthedocs.io/en/latest/library_type.html>. The latest
+<http://salmon.readthedocs.io/en/latest/library_type.html>. Recent 
 versions of Salmon can automatically detect the library type by
 setting `-l A`. Such a command can be automated in a bash loop using
 bash variables, or one can use more advanced workflow management
-systems such as Snakemake or Nextflow (cite).
+systems such as Snakemake [@Koster2012Snakemake] or Nextflow [@Di2017Nextflow].
 
 ```
 salmon quant -p 6 -i gencode.v28_salmon-0.10.0 -l IU \
@@ -368,7 +368,7 @@ txdf <- txdf[match(rownames(cts),txdf$TXNAME),]
 all(rownames(cts) == txdf$TXNAME)
 ```
 
-In order to run *DRIMSeq* we build a *data.frame* with the gene ID,
+In order to run *DRIMSeq*, we build a *data.frame* with the gene ID,
 the feature ID, and then columns for each of the samples:
 
 ```{r}
@@ -397,7 +397,7 @@ counts(d[1,])[,1:4]
 ```
 
 It will be useful to first filter the object, before running
-procedures to estimate model parameters. It greatly speeds up the
+procedures to estimate model parameters. This greatly speeds up the
 fitting and removes transcripts which would be troublesome for
 parameter estimation, e.g. estimating the proportion of expression
 among the transcripts of a gene when the total count is very low. We first
@@ -419,7 +419,7 @@ up more than 10% of the gene's expression for at least `n.small`
 samples, it will be removed. If this proportion seems to high, for
 example, if very lowly expressed isoforms are of particular interest,
 then the filter can be omitted or the `min_feature_prop`
-lowered. After filtering, the dataset has 7,764 genes.
+lowered. After filtering, this dataset has 7,764 genes.
 
 ```{r}
 n <- 12
@@ -440,7 +440,7 @@ plotData(d)
 We create a design matrix, using a design formula and the sample
 information contained in the object, accessed via *samples*. Here we
 use a simple design with just two groups, but more complex designs are
-possible. For some discussion of complex designs, one can reference
+possible. For some discussion of complex designs, one can refer to
 the vignettes of the *limma*, *edgeR*, or *DESeq2* packages.
 
 ```{r}
@@ -465,7 +465,7 @@ equation, they are inversely related. Higher *dispersion* -- counts more
 variable around their expected value -- is associated with lower
 *precision*. For full details about the DRIMSeq model, one should read
 both the DRIMSeq software vignette and the DRIMSeq publication
-(cite). After estimating the precision, we fit regression coefficients
+[@Nowicka2016DRIMSeq]. After estimating the precision, we fit regression coefficients
 and perform null hypothesis testing on the coefficient of
 interest. Because we have a simple two-group model, we test the
 coefficient associated with the difference between condition 2 and
@@ -532,11 +532,11 @@ A typical analysis of differential transcript usage would involve
 asking first: "which genes contain any evidence of DTU?", and secondly
 "which transcripts in the genes that contain some evidence may be
 participating in the DTU?". Note that a gene may pass the first
-stage, although there is not enough evidence to identify one or more
+stage without exhibiting enough evidence to identify one or more
 transcripts that are participating. The *stageR* package is designed
 to allow for such two-stage testing procedures, where the first stage
 is called a *screening* stage and the second stage a *confirmation*
-stage (cite). The methods are general, and can also be applied to
+stage [@Van2017StageR]. The methods are general, and can also be applied to
 testing, for example, changes across a time series followed by
 investigation of individual timepoints, as shown in the *stageR*
 package vignette. We show below how *stageR* is used to detect DTU and
@@ -545,7 +545,7 @@ how to interpret its output.
 We first construct a vector of p-values for the screening
 stage. Because of how the *stageR* package will combine transcript and
 gene names, we need to strip the gene and transcript version numbers
-from their Ensembl IDs (so taking the first 15 characters).
+from their Ensembl IDs (this is done by taking the first 15 characters).
 
 ```{r}
 pScreen <- res$pvalue

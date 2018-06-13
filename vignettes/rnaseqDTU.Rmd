@@ -43,31 +43,38 @@ opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE,
 
 # Introduction
 
-RNA-seq experiments can be analyzed to detect changes across groups of
-samples in total gene expression, i.e. the total number of transcripts
-produced by all isoforms of a gene, and additionally differences in
+RNA-seq experiments can be analyzed to detect differences across groups of
+samples in total gene expression -- the total number of transcripts
+produced by all isoforms of a gene -- and additionally differences in
 transcript usage within a gene. If the number of expressed transcripts
 switches among two or more isoforms of a gene, then the total gene
 expression may not change by a detectable amount, but such
-differential transcript usage is of interest to biological and
-biomedical researchers. While many packages and workflows in the
+differential transcript usage is still of interest to biological and
+biomedical researchers. While many tutorials and workflows in the
 Bioconductor project address differential gene expression, there are
-fewer guides for performing a differential transcript usage analysis,
+fewer workflows for performing a differential transcript usage analysis,
 which provides critical and complementary information to a the
-gene-level analysis. Some of the existing packages and vignettes that 
+gene-level analysis.Some of the existing Bioconductor packages and vignettes that 
 can be used to detect differential transcript usage include *BitSeq*, 
 *DEXSeq* (originally designed for differential exon usage), `diffSpliceDGE` 
 from the *edgeR* package, `diffSplice` from the *limma* package, *DRIMSeq*, 
-*stageR*, and *IsoformSwitchAnalyzeR*. 
+*stageR*, and *IsoformSwitchAnalyzeR* (cite). 
 Others can be found at the following link: 
 <https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>
+
+We note that there are numerous other methods for detecting
+differential transcript usage outside of the Bioconductor project. The
+*DRIMSeq* publication is a good reference and has descriptions and
+comparisons with many such methods.
+This workflow will build on the methods and vignettes from three
+Bioconductor packages: *DRIMSeq*, *DEXSeq*, and *stageR*.
 
 Previously, some of the developers of the Bioconductor packages
 *edgeR* and *DESeq2* (cite) have collaborated to develop the
 *tximport* package (cite) for summarizing the output of fast
 transcript-level quantifiers, such as *Salmon* [@Patro2017Salmon],
 *Sailfish*, and *kallisto* (cite). The *tximport* package focuses on
-preparing estimated transcript-level quantities, counts, abundances
+preparing estimated transcript-level counts, abundances
 and effective transcript lengths, for gene-level statistical analysis
 using *edgeR*, *DESeq* or *limma-voom* (cite). *tximport* produces an
 offset matrix to accompany gene-level counts, that accounts for
@@ -76,31 +83,31 @@ transcript usage among transcripts of different length that would bias
 an estimator of fold change based on the gene-level counts (cite
 Trapnell). *tximport* can alternatively produce a matrix of data that
 is roughly on the scale of counts, by scaling abundances to add up to
-the total number of reads, which directly corrects for technical
-biases and differential transcript usage across samples, obviating the
-need for the accompanying offset matrix.
+the total number of reads. This counts-from-abundance approach
+directly corrects for technical biases and differential transcript
+usage across samples, obviating the need for the accompanying offset matrix.
 
 Complementary to an analysis of differential gene expression, one can
-use *tximport* to import transcript-level counts, and then pass these
+use *tximport* to import transcript-level estimated counts, and then pass these
 counts to packages such as *DRIMSeq* or *DEXSeq* for statistical
 analysis of differential transcript usage. Following a
 transcript-level analysis, one can aggregate evidence of differential
 transcript usage to the gene-level. The *stageR* package in
-Bioconductor provides a statistcal framework for screening for
-differential transcript usage using gene-level adjusted p-values,
-followed by confirmation of which transcripts are differential using
-transcript-level adjusted p-values (cite). The method provides
+Bioconductor provides a statistical framework to *screen* at the
+gene-level for differential transcript usage with gene-level adjusted p-values,
+followed by *confirmation* of which transcripts show differential usage
+with transcript-level adjusted p-values (cite). The method provides
 _overall false discovery rate_ error control for such a two-stage
 procedure, which will be discussed in more detail later in the
-workflow. We believe that this represents a principled approach to
-analyzing transcript usage changes, as the  methods can be evaluated
+workflow. We believe that *stageR* represents a principled approach to
+analyzing transcript usage changes, as the methods can be evaluated
 against a target error rate in a manner that mimics how the methods
-would actually be used in practice. That is, following rejection of
+will actually be used in practice. That is, following rejection of
 the null hypothesis at the gene-level, investigators would likely
 desire to know which transcripts within a gene participated in the
-differential usage. 
+differential usage.
 
-Here we provide a simple workflow for detecting
+Here we provide a basic workflow for detecting
 differential transcript abundance using Bioconductor packages,
 following quantification of transcript abundance using the *Salmon*
 method. This workflow includes live, runnable code chunks for analysis
@@ -130,8 +137,9 @@ provided by the *recount2* project (cite DESeq2, recounts2).
 *polyester* was used to simulate paired-end RNA-seq reads for two
 groups of 12 samples each, with realistic fragment GC bias, and with
 dispersion on transcript-level counts following the joint distribution
-of mean and dispersion values estimated from the GEUVADIS samples. The
-first sample for group 1 and the first sample for group 2 followed the
+of mean and dispersion values estimated from the GEUVADIS samples
+(cite). 
+The first sample for group 1 and the first sample for group 2 followed the
 realistic GC bias profile of the same sample, and so on for all 12
 samples. This pairing of the samples was used to generate balanced
 data, but not used in the statistical analysis. The baseline for
@@ -161,9 +169,10 @@ the isoforms was affected. For 10% of genes, differential transcript
 usage was constructed by exchanging the abundance of two expressed
 isoforms, or if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
-genes counted for DTU, but not for DGE.
+genes counted for DTU, but not for DGE. An MA plot of the simulated
+abundances for the two groups is shown in Figure \@ref(fig:ma-simulated).
 
-```{r ma-simulated, messages=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which were expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), and 23\\% are differentially expressed (green, orange, or purple)."}
+```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average of log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which were expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), and 23\\% are differentially expressed (green, orange, or purple)."}
 load("simulate.rda")
 library(rafalib)
 bigpar()
@@ -321,7 +330,8 @@ range(colSums(cts)/1e6)
 ```
 
 We also have the `txdf` object giving the transcript-to-gene
-mappings. This is contained in a file called `simulate.rda` that
+mappings (for construction, see previous section). 
+This is contained in a file called `simulate.rda` that
 contains a number of R objects with information about the
 simulation, that we will use later to assess the methods'
 performance. 
@@ -569,20 +579,23 @@ its FDR bounds if we considered either the gene-level tests or the
 transcript-level tests. We found that a post-hoc filtering of the
 *DRIMSeq* results table to exclude transcripts with small estimated
 change in proportions brought the observed FDR closer to its nominal
-target, and so we provide example code for this filtering here:
-
-TODO fix `getDiffProp`
+target. We have written a simple function for assessing the difference
+in fitted proportions between two groups, but it is not general for
+all designs.
 
 ```{r}
-# this is a quick hack. before submitting, i will
-# re-write it to be safe to its assumptions and have stop()'s
-getDiffProp <- function(d, n.sub) {
-  prop.d <- proportions(d)
-  fitted <- subset(prop.d, select=-c(gene_id, feature_id))[,c(1,n.sub+1)]
+getDiffProp <- function(d, design_full) {
+  # test first to make sure the design is a simple two group
+  stopifnot(ncol(design_full == 2) & all(design_full[,1] == 1) & all(design_full[,2] %in% 0:1))
+  # identify a sample from each group
+  samp.idx <- sapply(0:1, function(i) which(design_full[,2] == i)[1])
+  # pull out the fitted proportions
+  fitted <- proportions(d)[,2 + samp.idx]
+  # absolute difference
   abs(fitted[,2] - fitted[,1])
 }
 res.txp.filt <- DRIMSeq::results(d, level="feature")
-res.txp.filt$dprop <- getDiffProp(d, 6)
+res.txp.filt$dprop <- getDiffProp(d, design_full)
 res.txp.filt$pvalue[res.txp.filt$dprop < .1] <- 1
 res.txp.filt$adj_pvalue[res.txp.filt$dprop < .1] <- 1
 ```
@@ -860,17 +873,36 @@ knitr::include_graphics("figs/ofdr.pdf")
 
 Finally, we assessed the normal false discovery rate at the
 transcript-level without using stage-wise testing for all three
-methods (including post-hoc filtering option for *DRIMSeq*). Here we
-simply looked across the transcript-level adjusted p-values without
-regard for which transcripts came from which gene. *SUPPA2* again
-tended to controlled its FDR, as did *DEXSeq*. *DRIMSeq* with
-difference-in-proportion filtering approached the target FDR sample
+methods (including post-hoc filtering option for *DRIMSeq*), again
+using *iCOBRA*. 
+This analysis looked across the transcript-level adjusted p-values for DTU
+without using the information associating transcripts to gene. *SUPPA2* again
+tended to controlled its FDR, as did *DEXSeq* (Figure \@ref(fig:dtu-txp)). 
+*DRIMSeq* with difference-in-proportion filtering approached the target FDR sample
 size increased for the 5% and 10% targets, while without filtering,
 the observed FDR was always higher than the target.
+While we performed this last evaluation on the independently adjusted
+p-values from the transcript-level, we recommend instead to use the
+stage-wise framework and adjusted p-values provided by the *stageR*
+method, assessed in Figure \@ref(fig:dtu-ofdr).
 
 ```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering) and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp.jpeg")
 ```
+
+In Table \@ref(tab:timing-dtu) we include the timing for each method at
+various sample sizes. Timing includes only the `diffSplice` step of
+*SUPPA2* (the other steps take less than a minute). For *DRIMSeq* and
+*DEXSeq*, we include the timing of the estimation steps (importing
+counts with *tximport* and filtering takes only a few seconds).
+
+: (\#tab:timing-dtu) Timing of methods for DTU in minutes by per-group sample size.
+
+| Method | n=3 | n=6 | n=9 | n=12 |
+| --- | --- | --- | --- | --- | 
+| *DRIMSeq* | 0:30 | 0:18 | 0:18 | 0:18 |
+| *DEXSeq* | 0:01 | 0:02 | 0:04 | 0:07 |
+| *SUPPA2* | 0:16 | 1:18 | 3:48 | 5:33 |
 
 # Differential gene expression
 
@@ -970,15 +1002,37 @@ legend("topright",
        col=c(1:3,8), pch=20, bty="n")
 ```
 
-
-
 # Evaluation of methods for DGE
 
-TODO: drop in plots
+We additionally assessed Bioconductor and R packages for differential
+gene expression, to determine true positive rate and control of false
+discovery rate. In this analysis, the simulated "DTE" genes (where a single
+transcript was chosen to be differentially expressed) should count for
+differential gene expression, while the simulated "DTU" genes should
+not, as the expression remains constant.
+
+: (\#tab:timing-dge) Timing of methods for DGE in minutes by per-group sample size.
+
+| Method | n=3 | n=6 | n=9 | n=12 |
+| --- | --- | --- | --- | --- | 
+| foo | 1 | 2 | 3 | 4 |
 
 # Evaluation of methods for DTE
 
-TODO: drop in plots
+Finally, we assessed the Bioconductor and R packages for differential
+transcript expression. While we believe the separation of differential
+transcript usage and differential gene expression described in the
+earlier sections of the workflow represent an easily interpretable
+approach, some investigators may prefer to assess differential
+expression on a per-transcript basis. For this assessment, all of the
+simulated non-null transcripts count as DTE, whether from the
+simulated "DGE", "DTE", or "DTU" genes.
+
+: (\#tab:timing-dte) Timing of methods for DTE in minutes by per-group sample size.
+
+| Method | n=3 | n=6 | n=9 | n=12 |
+| --- | --- | --- | --- | --- | 
+| foo | 1 | 2 | 3 | 4 |
 
 # Discussion 
 
@@ -997,11 +1051,11 @@ Please add details of where any datasets that are mentioned in the paper, and th
 
 This section will be generated by the Editorial Office before publication. Authors are asked to provide some initial information to assist the Editorial Office, as detailed below.
 
-1. URL link to where the software can be downloaded from or used by a non-coder (AUTHOR TO PROVIDE; optional)
-2. URL link to the author's version control system repository containing the source code (AUTHOR TO PROVIDE; required)
+1. All software used in this workflow should be installed from the release branch of Bioconductor.
+2. Source: https://github.com/mikelove/rnaseqDTU
 3. Link to source code as at time of publication (*F1000Research* TO GENERATE)
 4. Link to archived source code as at time of publication (*F1000Research* TO GENERATE)
-5. Software license (AUTHOR TO PROVIDE; required)
+5. License: Artistic-2.0
 
 # Author information
 
@@ -1009,7 +1063,7 @@ In order to give appropriate credit to each author of an article, the individual
 
 # Competing interests
 
-All financial, personal, or professional competing interests for any of the authors that could be construed to unduly influence the content of the article must be disclosed and will be displayed alongside the article. If there are no relevant competing interests to declare, please add the following: 'No competing interests were disclosed'.
+No competing interests were disclosed.
 
 # Grant information
 

@@ -60,7 +60,7 @@ can be used to detect differential transcript usage include *BitSeq*,
 from the *edgeR* package, `diffSplice` from the *limma* package, *DRIMSeq*, 
 *stageR*, and *IsoformSwitchAnalyzeR* (cite). 
 Others can be found at the following link: 
-<https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>
+<https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>.
 For more information about the Bioconductor project and its core
 infrastructure, please refer to the (cite latest Bioc paper).
 
@@ -78,13 +78,13 @@ transcript-level quantifiers, such as *Salmon* [@Patro2017Salmon],
 *Sailfish*, and *kallisto* (cite). The *tximport* package focuses on
 preparing estimated transcript-level counts, abundances
 and effective transcript lengths, for gene-level statistical analysis
-using *edgeR*, *DESeq* or *limma-voom* (cite). *tximport* produces an
+using *edgeR*, *DESeq2* or *limma-voom* (cite). *tximport* produces an
 offset matrix to accompany gene-level counts, that accounts for
 various RNA-seq biases (cite Salmon) as well as differences in
 transcript usage among transcripts of different length that would bias
 an estimator of fold change based on the gene-level counts (cite
 Trapnell). *tximport* can alternatively produce a matrix of data that
-is roughly on the scale of counts, by scaling abundances to add up to
+is roughly on the scale of counts, by scaling TPM abundances to add up to
 the total number of reads. This counts-from-abundance approach
 directly corrects for technical biases and differential transcript
 usage across samples, obviating the need for the accompanying offset matrix.
@@ -113,7 +113,7 @@ Here we provide a basic workflow for detecting
 differential transcript abundance using Bioconductor packages,
 following quantification of transcript abundance using the *Salmon*
 method. This workflow includes live, runnable code chunks for analysis
-using the *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
+using *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
 testing of differential transcript usage using the *stageR*
 package. For the workflow, we use data which is simulated with
 experimental parameters estimated from the GEUVADIS dataset, so that
@@ -154,7 +154,7 @@ following link: <https://github.com/mikelove/swimdown/countsimqc>
 
 Differential expression across two groups was generated as follows:
 70% of the genes were set as "null genes", where abundance was not
-changed across two groups. For 10% of genes, all isoforms were
+changed across the two groups. For 10% of genes, all isoforms were
 differentially expressed at a log fold change between 1 and 2.58. This
 set of genes and transcripts were classified as "DGE", differential
 gene expression, but did not count as "DTU", differential transcript
@@ -324,7 +324,7 @@ txdf$ntx <- tab[match(txdf$GENEID, names(tab))]
 
 We load the `cts` object as created in the code chunk above. This
 contains count-scale data, generated from abundance using the
-`scaledTPM` method. The column sums are equal to the number of
+`scaledTPM` method. The column sums are equal to the number of mapped 
 paired-end reads per experiment. The experiments have between 31 and
 38 million paired-end reads that were mapped to the transcriptome
 using *Salmon*.
@@ -510,7 +510,7 @@ transcripts that are participating. The *stageR* package is designed
 to allow for such two-stage testing procedures, where the first stage
 is called a *screening* stage and the second stage a *confirmation*
 stage (cite). The methods are general, and can also be applied to
-testing, for example changes across a time series followed by
+testing, for example, changes across a time series followed by
 investigation of individual timepoints, as shown in the *stageR*
 package vignette. We show below how *stageR* is used to detect DTU and
 how to interpret its output.
@@ -850,7 +850,7 @@ As we were interested in the performance at various sample sizes, we
 performed the entire analysis for *DRIMSeq*, *DEXSeq*, and *SUPPA2* at
 per-group sample sizes of 3,6,9, and 12. 
 
-At the gene-level, in terms of controlling at
+At the gene-level, in terms of controlling 
 the nominal FDR, *SUPPA2* always controlled its FDR, even for the
 smallest sample size, *DEXSeq* controlled except for the 1% threshold
 in the smallest case, and *DRIMSeq* exceeded its FDR but approached
@@ -883,7 +883,7 @@ methods (including post-hoc filtering option for *DRIMSeq*), again
 using *iCOBRA*. 
 This analysis looked across the transcript-level adjusted p-values for DTU
 without using the information associating transcripts to gene. *SUPPA2* again
-tended to controlled its FDR, as did *DEXSeq* (Figure \@ref(fig:dtu-txp)). 
+tended to control its FDR, as did *DEXSeq* (Figure \@ref(fig:dtu-txp)). 
 *DRIMSeq* with difference-in-proportion filtering approached the target FDR sample
 size increased for the 5% and 10% targets, while without filtering,
 the observed FDR was always higher than the target.
@@ -939,7 +939,7 @@ txi.g <- tximport(files, type="salmon", tx2gene=txdf[,2:1])
 ``` 
 
 For the workflow, we load the `txi.g` object which is saved in a file
-`salmon_gene_txi.rda`. We then load the *DESeq2* library and build a
+`salmon_gene_txi.rda`. We then load the *DESeq2* package and build a
 *DESeqDataSet* from `txi.g`, providing also the sample information and
 a design formula.
 

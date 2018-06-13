@@ -407,12 +407,19 @@ three of the possible filters: we require that (1) at least `n.small`
 samples have a count of 10, for a transcript to be included in the
 dataset, (2) at least `n.small` samples have a proportion of 0.1 or
 larger, and (3) that all `n` samples have a total count of 10 or
-more. If `n` was large, it would make sense to allow perhaps a few
-samples to have very low counts, so lowering `min_samps_gene_expr` to
-some multiple of `n`, likewise for the first two filters. After
-filtering, the dataset has only 7,764 genes.
+more. 
 
-TODO more details about the filter
+It is important to consider what types of transcripts may be removed
+by the filters, and potentially adjust depending on the dataset.  If
+`n` was large, it would make sense to allow perhaps a few samples to
+have very low counts, so lowering `min_samps_gene_expr` to some
+multiple $< 1$ of `n`, and likewise for the first two filters for
+`n.small`. The second filter means that if a transcript does not make
+up more than 10% of the gene's expression for at least `n.small`
+samples, it will be removed. If this proportion seems to high, for
+example, if very lowly expressed isoforms are of particular interest,
+then the filter can be omitted or the `min_feature_prop`
+lowered. After filtering, the dataset has 7,764 genes.
 
 ```{r}
 n <- 12
@@ -598,35 +605,30 @@ this procedure entails. This cannot be said for an arbitrary procedure
 of looking at simple gene adjusted p-values and transcript adjusted
 p-values, where the adjustment was performed independently.
 
-## Filtering on the change in proportions
+## Post-hoc filtering on the standard deviation in proportions
 
 We found that *DRIMSeq* was sensitive to detect DTU, but could exceed
-its FDR bounds if we considered either the gene-level tests or the
-transcript-level tests. We found that a post-hoc filtering of the
-*DRIMSeq* results table to exclude transcripts with small estimated
-change in proportions brought the observed FDR closer to its nominal
-target. We have written a simple function for assessing the difference
-in fitted proportions between two groups, but it is not general for
-all designs. 
-
-TODO: consider removing this, and substituting with a non-specific
-variance filter on proportions
+its FDR bounds particularly on the transcript-level tests. We found
+that a post-hoc, non-specific filtering of the *DRIMSeq* results table
+improved the FDR control. We considered the standard deviation of the
+per-sample proportions as a filtering statistic. This statistic does
+not use the information about which samples belong to which condition
+group. Excluding transcripts with small standard deviation of the
+per-sample proportions brought the observed FDR closer to its nominal
+target in the simulation considered here, as shown below.
 
 ```{r}
-getDiffProp <- function(d, design_full) {
-  # test first to make sure the design is a simple two group
-  stopifnot(ncol(design_full == 2) & all(design_full[,1] == 1) & all(design_full[,2] %in% 0:1))
-  # identify a sample from each group
-  samp.idx <- sapply(0:1, function(i) which(design_full[,2] == i)[1])
-  # pull out the fitted proportions
-  fitted <- proportions(d)[,2 + samp.idx]
-  # absolute difference
-  abs(fitted[,2] - fitted[,1])
-}
 res.txp.filt <- DRIMSeq::results(d, level="feature")
-res.txp.filt$dprop <- getDiffProp(d, design_full)
-res.txp.filt$pvalue[res.txp.filt$dprop < .1] <- 1
-res.txp.filt$adj_pvalue[res.txp.filt$dprop < .1] <- 1
+getSampleProportions <- function(d) {
+  cts <- as.matrix(subset(counts(d), select=-c(gene_id, feature_id)))
+  gene.cts <- rowsum(cts, counts(d)$gene_id)
+  total.cts <- gene.cts[match(counts(d)$gene_id, rownames(gene.cts)),]
+  cts/total.cts
+}
+prop.d <- getSampleProportions(d)
+res.txp.filt$prop.sd <- sqrt(rowVars(prop.d))
+res.txp.filt$pvalue[res.txp.filt$prop.sd < .1] <- 1
+res.txp.filt$adj_pvalue <- p.adjust(res.txp.filt$pvalue, method="BH")
 ```
 
 ## DEXSeq
@@ -940,13 +942,13 @@ counts with *tximport* and filtering takes only a few seconds).
 
 TODO: check why 18 minutes for DRIMSeq three times?
 
-: (\#tab:timing-dtu) Timing of methods for DTU in minutes by per-group sample size.
+: (\#tab:timing-dtu) Timing of methods for DTU in hours:minutes by per-group sample size.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
 | --- | --- | --- | --- | --- | 
 | *DRIMSeq* | 0:15 | 0:15 | 0:18 | 0:18 |
-| *DEXSeq* | 0:01 | 0:02 | 0:04 | 0:07 |
-| *SUPPA2* | 0:16 | 1:18 | 3:48 | 5:33 |
+| *DEXSeq*  | 0:01 | 0:02 | 0:04 | 0:07 |
+| *SUPPA2*  | 0:16 | 1:18 | 3:48 | 5:33 |
 
 # DTU analysis complements DGE analysis
 
@@ -1129,31 +1131,33 @@ transcript was chosen to be differentially expressed) should count for
 differential gene expression, while the simulated "DTU" genes should
 not, as the expression remains constant.
 
+TODO add the supplementary plots for without bias and with less DE
+
 : (\#tab:timing-dge) Timing of methods for DGE rounded to the
-  minute by per-group sample size. Timing includes summarization to
-  gene-level quantities.
+  minute by per-group sample size. Timing includes data import and
+  summarization to gene-level quantities.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
 | ---------- | --- | --- | --- | --- | 
-| *DESeq2*   | | | | |
+| *DESeq2*   | <1 | <1 | <1 | <1 |
 | *EBSeq*    | 1 | 2 | 2 | 3 |
-| *edgeR*    | | | | |
-| *edgeR QL* | | | | |
-| *limma*    | | | | |
-| *SAMSeq*   | | | | |
+| *edgeR*    | <1 | <1 | <1 | <1 |
+| *edgeR-QL* | <1 | <1 | <1 | <1 |
+| *limma*    | <1 | <1 | <1 | <1 |
+| *SAMSeq*   | <1 | <1 | <1 | <1 |
 | *sleuth*   | 2 | 4 | 5 | 7 |
 
 : (\#tab:timing-dte) Timing of methods for DTE rounded to the nearest
-  minute by per-group sample size. 
+  minute by per-group sample size. Timing includes data import.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
 | ---------- | --- | --- | --- | --- | 
-| *DESeq2*   | | | | |
+| *DESeq2*   | <1 | <1 | <1 | 1 |
 | *EBSeq*    | 5 | 11 | 18 | 22 |
-| *edgeR*    | | | | |
-| *edgeR QL* | | | | |
-| *limma*    | | | | |
-| *SAMSeq*   | | | | |
+| *edgeR*    | <1 | <1 | <1 | <1 |
+| *edgeR-QL* | <1 | <1 | <1 | <1 |
+| *limma*    | <1 | <1 | <1 | <1 |
+| *SAMSeq*   | <1 | <1 | <1 | 1 |
 | *sleuth*   | 2 | 2 | 2 | 2 |
 
 # Evaluation of methods for DTE

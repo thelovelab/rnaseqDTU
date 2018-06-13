@@ -5,6 +5,10 @@ author:
   affiliation: 
   - Department of Biostatistics, UNC-Chapel Hill, Chapel Hill, NC, US
   - Department of Genetics, UNC-Chapel Hill, Chapel Hill, NC, US
+- name: Charlotte Soneson
+  affiliation:
+  - Institute of Molecular Life Sciences, University of Zurich, Zurich, Switzerland
+  - SIB Swiss Institute of Bioinformatics, Zurich, Switzerland
 - name: Rob Patro
   affiliation: Department of Computer Science, Stony Brook University
 date: 5 June, 2018
@@ -393,6 +397,8 @@ more. If `n` was large, it would make sense to allow perhaps a few
 samples to have very low counts, so lowering `min_samps_gene_expr` to
 some multiple of `n`, likewise for the first two filters. After
 filtering, the dataset has only 7,764 genes.
+
+TODO more details about the filter
 
 ```{r}
 n <- 12

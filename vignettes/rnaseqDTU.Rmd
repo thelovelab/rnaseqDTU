@@ -880,7 +880,7 @@ size increased (Figure \@ref(fig:dtu-ofdr)). Without the filtering,
 the observed OFDR for *DRIMSeq* was otherwise around 20-25%.
 
 [Charlotte: all other plots have white background - maybe this one should too :)]
-```{r dtu-ofdr, out.width="75%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
+```{r dtu-ofdr, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
 knitr::include_graphics("figs/ofdr.pdf")
 ```
 

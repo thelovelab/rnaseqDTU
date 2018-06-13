@@ -872,7 +872,7 @@ with(dxr.g, table(sig=qval < .05, dge))
 
 
 ```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
-knitr::include_graphics("figs/dtu_gene.jpeg")
+knitr::include_graphics("figs/dtu_gene.jpg")
 ```
 
 The *iCOBRA* package was used to construct plots to assess the true
@@ -929,7 +929,7 @@ stage-wise framework and adjusted p-values provided by the *stageR*
 method, assessed in Figure \@ref(fig:dtu-ofdr).
 
 ```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering) and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
-knitr::include_graphics("figs/dtu_txp.jpeg")
+knitr::include_graphics("figs/dtu_txp.jpg")
 ```
 
 In Table \@ref(tab:timing-dtu) we include the timing for each method at
@@ -944,7 +944,7 @@ TODO: check why 18 minutes for DRIMSeq three times?
 
 | Method | n=3 | n=6 | n=9 | n=12 |
 | --- | --- | --- | --- | --- | 
-| *DRIMSeq* | 0:15 | 0:18 | 0:18 | 0:18 |
+| *DRIMSeq* | 0:15 | 0:15 | 0:18 | 0:18 |
 | *DEXSeq* | 0:01 | 0:02 | 0:04 | 0:07 |
 | *SUPPA2* | 0:16 | 1:18 | 3:48 | 5:33 |
 
@@ -1118,6 +1118,10 @@ legend("topright",
 
 # Evaluation of methods for DGE
 
+```{r dge, out.width="75%", echo=FALSE, fig.cap="foo bar"}
+knitr::include_graphics("figs/dge.jpg")
+```
+
 We additionally assessed Bioconductor and R packages for differential
 gene expression, to determine true positive rate and control of false
 discovery rate. In this analysis, the simulated "DTE" genes (where a single
@@ -1132,6 +1136,10 @@ not, as the expression remains constant.
 | foo | 1 | 2 | 3 | 4 |
 
 # Evaluation of methods for DTE
+
+```{r dte, out.width="75%", echo=FALSE, fig.cap="foo bar"}
+knitr::include_graphics("figs/dte.jpg")
+```
 
 Finally, we assessed the Bioconductor and R packages for differential
 transcript expression. While we believe the separation of differential

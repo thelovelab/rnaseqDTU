@@ -1118,7 +1118,7 @@ legend("topright",
 
 # Evaluation of methods for DGE
 
-```{r dge, out.width="75%", echo=FALSE, fig.cap="foo bar"}
+```{r dge, out.width="75%", echo=FALSE, fig.cap="DGE foo bar"}
 knitr::include_graphics("figs/dge.jpg")
 ```
 
@@ -1129,15 +1129,36 @@ transcript was chosen to be differentially expressed) should count for
 differential gene expression, while the simulated "DTU" genes should
 not, as the expression remains constant.
 
-: (\#tab:timing-dge) Timing of methods for DGE in minutes by per-group sample size.
+: (\#tab:timing-dge) Timing of methods for DGE rounded to the
+  minute by per-group sample size. Timing includes summarization to
+  gene-level quantities.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
-| --- | --- | --- | --- | --- | 
-| foo | 1 | 2 | 3 | 4 |
+| ---------- | --- | --- | --- | --- | 
+| *DESeq2*   | | | | |
+| *EBSeq*    | 1 | 2 | 2 | 3 |
+| *edgeR*    | | | | |
+| *edgeR QL* | | | | |
+| *limma*    | | | | |
+| *SAMSeq*   | | | | |
+| *sleuth*   | 2 | 4 | 5 | 7 |
+
+: (\#tab:timing-dte) Timing of methods for DTE rounded to the nearest
+  minute by per-group sample size. 
+
+| Method | n=3 | n=6 | n=9 | n=12 |
+| ---------- | --- | --- | --- | --- | 
+| *DESeq2*   | | | | |
+| *EBSeq*    | 5 | 11 | 18 | 22 |
+| *edgeR*    | | | | |
+| *edgeR QL* | | | | |
+| *limma*    | | | | |
+| *SAMSeq*   | | | | |
+| *sleuth*   | 2 | 2 | 2 | 2 |
 
 # Evaluation of methods for DTE
 
-```{r dte, out.width="75%", echo=FALSE, fig.cap="foo bar"}
+```{r dte, out.width="75%", echo=FALSE, fig.cap="DTE foo bar"}
 knitr::include_graphics("figs/dte.jpg")
 ```
 
@@ -1149,12 +1170,6 @@ approach, some investigators may prefer to assess differential
 expression on a per-transcript basis. For this assessment, all of the
 simulated non-null transcripts count as DTE, whether from the
 simulated "DGE", "DTE", or "DTU" genes.
-
-: (\#tab:timing-dte) Timing of methods for DTE in minutes by per-group sample size.
-
-| Method | n=3 | n=6 | n=9 | n=12 |
-| --- | --- | --- | --- | --- | 
-| foo | 1 | 2 | 3 | 4 |
 
 # Discussion 
 

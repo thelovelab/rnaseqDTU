@@ -16,7 +16,21 @@ vignette: >
   %\VignetteIndexEntry{RNA-seq workflow for differential transcript usage following Salmon quantification}
   %\VignetteEngine{knitr::rmarkdown}
 abstract: |
-  RNA-seq workflow for differential transcript usage following Salmon quantification.
+  Detection of differential transcript usage (DTU) from RNA-seq data
+  is an important bioinformatic analysis that complements differential
+  gene expression analysis. Here we present a simple workflow using a
+  set of existing R/Bioconductor packages for analysis of DTU. We
+  show how these packages can be used downstream of RNA-seq
+  quantification using the Salmon software package. The entire
+  pipeline is fast, benefiting from previous inference steps by Salmon
+  to quantify expression at the transcript level. The workflow
+  includes live, runnable code chunks for analysis using DRIMSeq and
+  DEXSeq, as well as for performing two-stage testing of DTU using the
+  stageR package, a statistical framework to screen at the gene-level
+  and then confirm which transcripts within the significant genes show
+  evidence of DTU. We evaluate these packages and other related
+  packages on a simulated dataset with parameters estimated from real
+  data.
 keywords: RNA-seq, workflow, differential transcript usage, Salmon, DRIMSeq, DEXSeq, stageR, tximport
 bibliography: bibliography.bib
 output: BiocWorkflowTools::f1000_article
@@ -527,7 +541,7 @@ res.txp$pvalue <- no.na(res.txp$pvalue)
 We can plot the estimated proportions for one of the significant
 genes, where we can see evidence of switching (Figure \@ref(fig:plot-prop)).
 
-```{r plot-prop, out.width="50%", fig.cap="Estimated proportions for one of the significant genes."}
+```{r plot-prop, out.width="75%", fig.cap="Estimated proportions for one of the significant genes."}
 idx <- which(res$adj_pvalue < 0.05)[1]
 res[idx,]
 plotProportions(d, res$gene_id[idx], "condition")
@@ -1148,7 +1162,7 @@ legend("topright",
 
 # Evaluation of methods for DGE
 
-We additionally assessed Bioconductor and R packages for differential
+We additionally assessed Bioconductor and other R packages for differential
 gene expression, to determine true positive rate and control of false
 discovery rate on the simulated dataset. In this analysis, the
 simulated "DTE" genes (where a single transcript was chosen to be
@@ -1259,8 +1273,32 @@ knitr::include_graphics("figs/dte.jpg")
 
 # Discussion 
 
-This section is only required if the paper includes novel data or analyses, and should be written in the same style as a traditional discussion section.
-Please include a brief discussion of allowances made (if any) for controlling bias or unwanted sources of variability, and the limitations of any novel datasets.
+Here we presented a workflow for analyzing RNA-seq experiments for
+differential transcript usage across groups of samples. The
+Bioconductor packages used, *DRIMSeq*, *DEXSeq*, and *stageR* are
+simple to use and fast when run on transcript-level data. We show how
+these can be used downstream of transcript abundance quantification
+with *Salmon*. We evaluated these methods on a simulated dataset and
+showed how the transcript usage results can complement a gene-level
+analysis, which can also be run on output from *Salmon*, using the
+*tximport* package to aggregate quantification to the gene-level. We
+used the simulation dataset to evaluate Bioconductor and other R
+packages for differential gene expression, and differential transcript
+expression. We recommend the use of *stageR* for its formal
+statistical procedure involving a screening and confirmation stage, as
+this fits closely to what we expect a typical analysis to
+entail. *stageR* then provides error control for an overall false
+discovery rate, assuming that the underlying tests are well
+calibrated.
+
+One limitation of the workflow presented here is that, in contrast to
+other methods such as the standard *DEXSeq* analysis or *SUPPA2*, here
+we consider and detect expression switching between annotated
+transcript. Other methods such as *DEXSeq* and *SUPPA2* may benefit in
+terms of power and interpretability from performing statistical
+analysis directly on exon usage or splice events, whereas the pipeline
+presented here would require further processing to attribute
+transcript usage changes to splice events.
 
 # Session information
 

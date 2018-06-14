@@ -631,7 +631,8 @@ improved the FDR control. We considered the standard deviation (SD) of the
 per-sample proportions as a filtering statistic. This statistic does
 not use the information about which samples belong to which condition
 group. We set the p-values for transcripts with small per-sample
-proportion SD to 1 and then re-computed the adjusted p-values. 
+proportion SD to 1 and then re-computed the adjusted p-values using
+the method of @Benjamini1995Controlling. 
 Excluding transcripts with small SD of the per-sample proportions
 brought the observed FDR closer to its nominal target in the
 simulation considered here, as shown below. 

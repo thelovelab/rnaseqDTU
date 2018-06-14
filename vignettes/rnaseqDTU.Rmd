@@ -1202,7 +1202,7 @@ similar as previously, except *sleuth* did not control the nominal 5%
 or 10% FDR. We performed additional experiments to see if the
 performance of *sleuth* at higher sample sizes was related to the
 realistic GC bias parameters used in the simulation, but simulating
-fragments uniformly from the transcriptome revealed the same
+fragments uniformly from the transcripts revealed the same
 performance at per-group sample sizes 9 and 12 (Supplementary Figure
 2). Reducing the number of DGE, DTE and DTU genes from 10% to 5% each,
 however, did recover control of the FDR at the nominal 5% and 10% FDR

@@ -419,7 +419,8 @@ three of the possible filters: we require that (1) at least `n.small`
 samples have a count of 10, for a transcript to be included in the
 dataset, (2) at least `n.small` samples have a proportion of 0.1 or
 larger, and (3) that all `n` samples have a total count of 10 or
-more. 
+more. We used all three possible filters, whereas only the two count
+filters are used in the *DRIMSeq* vignette example code.
 
 It is important to consider what types of transcripts may be removed
 by the filters, and potentially adjust depending on the dataset.  If
@@ -443,13 +444,13 @@ d <- dmFilter(d,
 d
 ```
 
-The following plot gives a useful overview (Figure
-\@ref(fig:data-hist)). We can see the numbers driving the histogram
-by tabulating the number of times we see a gene ID, then tabulating
-the output again.
+The *dmDSdata* object only contains genes that have more that one
+isoform, which makes sense as we are testing for differential
+transcript usage. We can find out how many of the remaining genes have
+$N$ isoforms by tabulating the number of times we see a gene ID, then
+tabulating the output again:
 
-```{r data-hist, out.width="50%", fig.cap="Histogram of the number of genes by number of transcipts."}
-plotData(d)
+```{r}
 table(table(counts(d)$gene_id))
 ```
 
@@ -585,8 +586,8 @@ for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
 ```
 
 The following functions then perform the analysis. We must specify an
-`alpha` which will the *overall false discovery rate* target for the
-analysis, which will be defined below. Unlike typical adjusted p-values or
+`alpha` which will be the *overall false discovery rate* target for the
+analysis, defined below. Unlike typical adjusted p-values or
 q-values, we cannot choose an arbitrary threshold later: after
 specifying `alpha=0.05`, we need to use 5% as the target in downstream
 steps. There are also convenience functions *getSignificantGenes* and
@@ -608,7 +609,7 @@ The final table with adjusted p-values summarizes the information from
 the two stage analysis. Only genes which passed the filter are
 included in the table, so the table already represents *screened* genes. 
 The transcripts with `transcript` less than 0.05 pass the
-*confirmation* stage and have a target 5% *overall false
+*confirmation* stage on a target 5% *overall false
 discovery rate*, or OFDR. This means that, in expectation, no more
 than 5% of the genes that pass screening will either (1) not contain
 any DTU, so be falsely screened genes, or (2) contain a transcript with a
@@ -626,12 +627,14 @@ p-values, where the adjustment was performed independently.
 We found that *DRIMSeq* was sensitive to detect DTU, but could exceed
 its FDR bounds particularly on the transcript-level tests. We found
 that a post-hoc, non-specific filtering of the *DRIMSeq* results table
-improved the FDR control. We considered the standard deviation of the
+improved the FDR control. We considered the standard deviation (SD) of the
 per-sample proportions as a filtering statistic. This statistic does
 not use the information about which samples belong to which condition
-group. Excluding transcripts with small standard deviation of the
-per-sample proportions brought the observed FDR closer to its nominal
-target in the simulation considered here, as shown below.
+group. We set the p-values for transcripts with small per-sample
+proportion SD to 1 and then re-computed the adjusted p-values. 
+Excluding transcripts with small SD of the per-sample proportions
+brought the observed FDR closer to its nominal target in the
+simulation considered here, as shown below. 
 
 ```{r}
 res.txp.filt <- DRIMSeq::results(d, level="feature")
@@ -647,11 +650,17 @@ res.txp.filt$pvalue[res.txp.filt$prop.sd < .1] <- 1
 res.txp.filt$adj_pvalue <- p.adjust(res.txp.filt$pvalue, method="BH")
 ```
 
+The above post-hoc filter is not part of the *DRIMSeq* modeling steps,
+and to avoid interfering with the modeling, we run it after
+*DRIMSeq*. The other three filters used before have been tested by the
+*DRIMSeq* package authors and are therefore a recommended part of an
+analysis before the modeling begins.
+
 ## DEXSeq
 
 The *DEXSeq* package was originally designed for detecting
 differential exon usage (cite), but can also be adapted to run on estimated
-transcript counts from Salmon, in order to detect DTU. This
+transcript counts, in order to detect DTU. This
 usage of *DEXSeq* was evaluated by (cite Soneson isoform filtering) in a
 publication discussing the benefits in terms of FDR control of
 filtering lowly expressed transcripts for a transcript-level
@@ -708,7 +717,7 @@ system.time({
 ```
 
 We then extract the results table, not filtering on mean counts (as we
-have already conducted filtering via *DRIMSeq* functions. We compute a
+have already conducted filtering via *DRIMSeq* functions). We compute a
 per-gene adjusted p-value, using the *perGeneQValue* function, which
 aggregates evidence from multiple tests within a gene to a single
 p-value for the gene and then corrects for multiple testing across
@@ -847,7 +856,10 @@ p-values. We noticed that *SUPPA2* had a large gain in sensitivity,
 while still controlling its FDR, if the set of transcripts examined
 were limited to those that passed the *DRIMSeq* filtering steps
 above. Therefore, before running any multiple test correction steps,
-we filtered to this subset of transcripts.
+we filtered to this subset of transcripts. We assessed whether the 
+$\textrm{TPM} > 1$ filtering step made a difference in the sensitivity
+and false discovery rate for *SUPPA2* when combined with the *DRIMSeq*
+filtering, and it did not.
 
 ```{r eval=FALSE}
 suppa <- suppa[match(res.txp$feature_id, suppa$txp),]
@@ -933,17 +945,17 @@ knitr::include_graphics("figs/ofdr.pdf")
 Finally, we assessed the normal false discovery rate at the
 transcript-level without using stage-wise testing for all three
 methods (including post-hoc filtering option for *DRIMSeq*), again
-using *iCOBRA*. 
-This analysis looked across the transcript-level adjusted p-values for DTU
-without using the information associating transcripts to gene. *SUPPA2* again
-tended to control its FDR, as did *DEXSeq* (Figure \@ref(fig:dtu-txp)). 
-*DRIMSeq* with difference-in-proportion filtering approached the target FDR sample
+using *iCOBRA*.  This analysis looked across the transcript-level
+adjusted p-values for DTU without using the information associating
+transcripts to gene. *SUPPA2* again tended to control its FDR, as did
+*DEXSeq* (Figure \@ref(fig:dtu-txp)).  *DRIMSeq* with
+difference-in-proportion filtering approached the target FDR as sample
 size increased for the 5% and 10% targets, while without filtering,
-the observed FDR was always higher than the target.
-While we performed this last evaluation on the independently adjusted
-p-values from the transcript-level, we recommend instead to use the
-stage-wise framework and adjusted p-values provided by the *stageR*
-method, assessed in Figure \@ref(fig:dtu-ofdr).
+the observed FDR was always higher than the target.  While we
+performed this last evaluation on the independently adjusted p-values
+from the transcript-level, we recommend instead to use the stage-wise
+framework and adjusted p-values provided by the *stageR* method,
+assessed in Figure \@ref(fig:dtu-ofdr).
 
 ```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering) and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp.jpg")

@@ -294,10 +294,10 @@ transcript counts, then a change in transcript usage among
 transcripts of different length could result in a changed total count
 for the gene, even if there is no change in total gene
 expression. This is because the original transcript counts and
-`lengthScaledTPM` transcript counts are proportional to transcript
-length, while `scaledTPM` transcript counts are not. For testing DTU
+`lengthScaledTPM` transcript counts scale with transcript
+length, while `scaledTPM` transcript counts do not. For testing DTU
 using *DRIMSeq* and *DEXSeq*, it is convenient if the count-scale data
-is *not* proportional to transcript length within a gene.
+do *not* scale with transcript length within a gene.
 Note that this could be corrected by an offset, but this is not
 easily implemented in the current packages. While this workflow only
 considers existing software features, we are considering developing a new
@@ -931,10 +931,10 @@ recovering gene-level DTU in this simulation.
 We assessed the overall false discovery rate (OFDR) procedure
 implemented with *stageR* using gene- and transcript-level p-values
 from *DRIMSeq* and *DEXSeq*. For *DRIMSeq*, we assessed whether
-raising the p-values for transcripts with small difference in
-proportion helped to recover OFDR control. *DEXSeq* input to *stageR*
+raising the p-values for transcripts with small proportion SD
+helped to recover OFDR control. *DEXSeq* input to *stageR*
 tended to stay within the OFDR bound, and the observed OFDR for *DRIMSeq* with
-difference-in-proportion filtering lowered to less than 10% as the sample
+proportion SD filtering lowered to less than 10% as the sample
 size increased (Figure \@ref(fig:dtu-ofdr)). Without the filtering,
 the observed OFDR for *DRIMSeq* was otherwise around 20-25%.
 
@@ -949,7 +949,7 @@ using *iCOBRA*.  This analysis looked across the transcript-level
 adjusted p-values for DTU without using the information associating
 transcripts to gene. *SUPPA2* again tended to control its FDR, as did
 *DEXSeq* (Figure \@ref(fig:dtu-txp)).  *DRIMSeq* with
-difference-in-proportion filtering approached the target FDR as sample
+proportion SD filtering approached the target FDR as sample
 size increased for the 5% and 10% targets, while without filtering,
 the observed FDR was always higher than the target.  While we
 performed this last evaluation on the independently adjusted p-values

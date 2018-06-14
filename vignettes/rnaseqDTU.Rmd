@@ -639,7 +639,7 @@ p-values, where the adjustment was performed independently.
 ## Post-hoc filtering on the standard deviation in proportions
 
 We found that *DRIMSeq* was sensitive to detect DTU, but could exceed
-its FDR bounds particularly on the transcript-level tests. We found
+its FDR bounds, particularly on the transcript-level tests. We found
 that a post-hoc, non-specific filtering of the *DRIMSeq* results table
 improved the FDR control. We considered the standard deviation (SD) of the
 per-sample proportions as a filtering statistic. This statistic does
@@ -674,7 +674,7 @@ analysis before the modeling begins.
 ## DEXSeq
 
 The *DEXSeq* package was originally designed for detecting
-differential exon usage (cite), but can also be adapted to run on estimated
+differential exon usage [@Anders2012DEXSeq], but can also be adapted to run on estimated
 transcript counts, in order to detect DTU. This
 usage of *DEXSeq* was evaluated by (cite Soneson isoform filtering) in a
 publication discussing the benefits in terms of FDR control of
@@ -736,9 +736,9 @@ have already conducted filtering via *DRIMSeq* functions). We compute a
 per-gene adjusted p-value, using the *perGeneQValue* function, which
 aggregates evidence from multiple tests within a gene to a single
 p-value for the gene and then corrects for multiple testing across
-genes (cite DEXSeq). Other methods for aggregative evidence from the
+genes [@Anders2012DEXSeq]. Other methods for aggregative evidence from the
 multiple tests within genes have been discussed in a recent
-publication and may be substituted at this step (cite Yi).
+publication and may be substituted at this step [@Yi2018Gene].
 Finally, we build a simple results table with the
 per-gene adjusted p-values.
 
@@ -800,15 +800,15 @@ head(dex.padj)
 ## SUPPA2
 
 *SUPPA2* is a command-line software package written in Python
-which also takes as input *Salmon* quantification, and so for
-completeness we also show example commands and evaluated its
-performance on the simulated data (cite). *SUPPA2* offers a number of
+which also takes as input *Salmon* quantification, and so, for
+completeness, we also show example commands and evaluated its
+performance on the simulated data [@Trincado2018SUPPA2]. *SUPPA2* offers a number of
 distinct features, including the ability to translate from *Salmon*
 transcript-level quantifications to individual splicing events, which
 are cataloged using a specific vocabulary described in the software
 usage guide: <https://github.com/comprna/SUPPA>. *SUPPA2* additionally
 offers differential analysis on the splicing events, which may be more
-valuable to investigators than per-transcript, depending on the system
+valuable to investigators than per-transcript results, depending on the system
 and research goals (similar to the primary exon-level primary use case of
 *DEXSeq*). 
 
@@ -841,7 +841,7 @@ write.table(x[,n + 1:n], file=paste0("suppa/group2.tpm"), quote=FALSE, sep="\t")
 The *SUPPA2* example code can be found at the software homepage, but
 we include here the code used on the 6 vs 6 analysis. The first line
 generates a set of isoforms from the GTF file. The second and third
-line generate PSI (percent spliced in) for each transcript from files
+line generate PSI (percent spliced in) estimates for each transcript from files
 containing the TPMs for each group. The final line performs the
 differential analysis.
 
@@ -874,7 +874,7 @@ above. Therefore, before running any multiple test correction steps,
 we filtered to this subset of transcripts. We assessed whether the 
 $\textrm{TPM} > 1$ filtering step made a difference in the sensitivity
 and false discovery rate for *SUPPA2* when combined with the *DRIMSeq*
-filtering, and it did not.
+filtering; it did not.
 
 ```{r eval=FALSE}
 suppa <- suppa[match(res.txp$feature_id, suppa$txp),]
@@ -924,8 +924,8 @@ positive rate over the false discovery rate at three nominal FDR
 thresholds: 1%, 5%, and 10% (cite).  The code for evaluating all
 methods and constructing the *iCOBRA* plots is included in the
 repository at the following
-link: <https://github.com/mikelove/swimdown>
-Above we showed an analysis for a comparison of 6 vs 6 samples.
+link: <https://github.com/mikelove/swimdown>.
+Above, we showed an analysis for a comparison of 6 vs 6 samples.
 As we were interested in the performance at various sample sizes, we
 performed the entire analysis for *DRIMSeq*, *DEXSeq*, and *SUPPA2* at
 per-group sample sizes of 3,6,9, and 12. 
@@ -958,7 +958,7 @@ knitr::include_graphics("figs/ofdr.pdf")
 ```
 
 Finally, we assessed the normal false discovery rate at the
-transcript-level without using stage-wise testing for all three
+transcript-level, without using stage-wise testing, for all three
 methods (including post-hoc filtering option for *DRIMSeq*), again
 using *iCOBRA*.  This analysis looked across the transcript-level
 adjusted p-values for DTU without using the information associating
@@ -1005,8 +1005,8 @@ count-based methods (cite). We will then show code for using *DESeq2*
 and *edgeR* to assess differential gene expression. Because we have
 simulated the genes according to three different categories, we can
 color the final plot by the true simulated state of the genes. We note
-that, we will pair *DEXSeq* with *DESeq2* results in the following
-plot, and *DRIMSeq* with *edgeR* results, although this pairing is
+that we will pair *DEXSeq* with *DESeq2* results in the following
+plot, and *DRIMSeq* with *edgeR* results. However, this pairing is
 somewhat arbitrary, and any DTU method can reasonably be paired with
 any DGE method.
 
@@ -1029,7 +1029,7 @@ library(DESeq2)
 dds <- DESeqDataSetFromTximport(txi.g, samps, ~condition)
 ```
 
-The following two lines of code run the *DESeq2* analysis (cite).
+The following two lines of code run the *DESeq2* analysis [@Love2014Moderated].
 
 ```{r message=FALSE}
 dds <- DESeq(dds)
@@ -1088,7 +1088,7 @@ legend("topright",
 ## DGE analysis with edgeR
 
 We can repeat the same analysis using *edgeR* as the inference engine
-(cite). The following code incorporates the average transcript length
+[@Robinson2009EdgeR]. The following code incorporates the average transcript length
 matrix as an offset for an *edgeR* analysis.
 
 ```{r message=FALSE}
@@ -1193,7 +1193,7 @@ gene-level analysis across four different per-group sample sizes are
 presented in Figure \@ref(fig:dge). For the smallest per-group sample
 size of 3, all methods except *DESeq2* and *EBSeq* tended to control
 the FDR, while those two method had, for example, 15% FDR at the
-nominal 10% rate. *SAMseq* with so few samples did not have any
+nominal 10% rate. *SAMseq*, with so few samples, did not have any
 sensitivity to detect DGE. At the per-group sample size of 6, all
 methods except *DESeq2* and *SAMseq* tended to control the FDR. At this
 sample size, *EBSeq* controlled its FDR. For the largest per-group
@@ -1298,7 +1298,7 @@ transcript. Other methods such as *DEXSeq* and *SUPPA2* may benefit in
 terms of power and interpretability from performing statistical
 analysis directly on exon usage or splice events, whereas the pipeline
 presented here would require further processing to attribute
-transcript usage changes to splice events.
+transcript usage changes to specific splice events.
 
 # Session information
 

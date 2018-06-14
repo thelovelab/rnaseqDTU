@@ -48,7 +48,7 @@ opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE,
 # Introduction
 
 RNA-seq experiments can be analyzed to detect differences across groups of
-samples in total gene expression -- the total number of transcripts
+samples in total gene expression -- the total expression 
 produced by all isoforms of a gene -- and additionally differences in
 transcript usage within a gene. If the amount of expression
 switches among two or more isoforms of a gene, then the total gene
@@ -101,9 +101,10 @@ transcript-level analysis, one can aggregate evidence of differential
 transcript usage to the gene-level. The *stageR* package in
 Bioconductor provides a statistical framework to *screen* at the
 gene-level for differential transcript usage with gene-level adjusted p-values,
-followed by *confirmation* of which transcripts show differential usage
-with transcript-level adjusted p-values (cite). The method provides
-_overall false discovery rate_ error control for such a two-stage
+followed by *confirmation* of which transcripts within the significant
+genes show differential usage with transcript-level adjusted p-values
+(cite). The method provides _overall false discovery rate_ error
+control for such a two-stage 
 procedure, which will be discussed in more detail later in the
 workflow. We believe that *stageR* represents a principled approach to
 analyzing transcript usage changes, as the methods can be evaluated
@@ -114,7 +115,7 @@ desire to know which transcripts within a gene participated in the
 differential usage.
 
 Here we provide a basic workflow for detecting
-differential transcript abundance using Bioconductor packages,
+differential transcript usage using Bioconductor packages,
 following quantification of transcript abundance using the *Salmon*
 method. This workflow includes live, runnable code chunks for analysis
 using *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
@@ -139,8 +140,10 @@ All of the code used to simulate RNA-seq experiments and write
 paired-end reads can be found at the following
 link: <https://github.com/mikelove/swimdown>. 
 *Salmon* was used to estimate transcript-level abundances for a single
-sample **NOTE: which specific sample** of the GEUVADIS project (cite GEUVADIS, Salmon), and this was used as
-a baseline for transcript abundances in the simulation.
+sample (ERR188297) of the GEUVADIS project (cite GEUVADIS, Salmon), and this was used as
+a baseline for transcript abundances in the simulation. Transcripts
+which were associated with estimated counts less than 10 had abundance
+thresholded to 0, all other transcripts were considered "expressed".
 *alpine* was used to estimate realistic fragment GC bias from 12 samples from the GEUVADIS
 project from the same center [@Love2016Alpine]. *DESeq2* was
 used to estimate mean and dispersion parameters for a Negative
@@ -155,8 +158,7 @@ underlying transcript counts are not provided to the methods).
 *polyester* was used to simulate paired-end RNA-seq reads for two
 groups of 12 samples each, with realistic fragment GC bias, and with
 dispersion on transcript-level counts following the joint distribution
-of mean and dispersion values estimated from the GEUVADIS samples
-(cite). 
+of mean and dispersion values estimated from the GEUVADIS samples (cite). 
 The first sample for group 1 and the first sample for group 2 followed the
 realistic GC bias profile of the same sample, and so on for all 12
 samples. This pairing of the samples was used to generate balanced
@@ -275,15 +277,34 @@ names(files) <- samps$sample_id
 head(files)
 ```
 
-We can then import transcript-level counts using the following
-call. Here we suggest to generate counts from abundance, using the
+We can then import transcript-level counts using *tximport*.
+We suggest to generate counts from abundance, using the
 `scaledTPM` method described by Soneson et al (cite). As described
 above, the `countsFromAbundance` option of *tximport* uses estimated
 abundances to generate roughly count-scaled data, such that each
-column will sum to the number of reads generated for that library. One
-reason we suggest to use `scaledTPM` for differential transcript usage
-is that the estimated proportions that will be fit by *DRIMSeq* in
-following sections will correspond to proportions of abundance. 
+column will sum to the number of reads mapped for that library. 
+We recommend `scaledTPM` for differential transcript usage
+so that the estimated proportions fit by *DRIMSeq* in
+following sections correspond to the proportions of underlying
+abundance. 
+
+If instead of `scaledTPM`, we used the original estimated transcript counts
+(`countsFromAbundance="no"`), or if we used `lengthScaledTPM`
+transcript counts, then a change in transcript usage among
+transcripts of different length could result in a changed total count
+for the gene, even if there is no change in total gene
+expression. This is because the original transcript counts and
+`lengthScaledTPM` transcript counts are proportional to transcript
+length, while `scaledTPM` transcript counts are not. For testing DTU
+using *DRIMSeq* and *DEXSeq*, it is convenient if the count-scale data
+is *not* proportional to transcript length within a gene.
+Note that this could be corrected by an offset, but this is not
+easily implemented in the current packages. While this workflow only
+considers existing software features, we are considering developing a new
+`countsFromAbundance` method which would scale abundance for all
+transcripts of a gene by a fixed gene length, then each sample by its
+number of mapped reads, therefore balancing between the benefits of
+`scaledTPM` and `lengthScaledTPM`.
 
 The following code chunk is not evaluated, but instead we will load a
 pre-constructed matrix of counts. The actual quantification files for
@@ -298,26 +319,17 @@ cts <- txi$counts
 cts <- cts[rowSums(cts) > 0,]
 ```
 
-If we used the estimated counts themselves,
-or `lengthScaledTPM`, then a change in transcript usage between
-transcripts of different length could result in a changed total count
-for the gene, even if there is no change in total gene
-expression. While this could be corrected by an offset, this is not
-easily implemented in the current packages. While this workflow only
-considers existing software features, we are considering developing a new
-`countsFromAbundance` method which would scale abundance for all
-transcripts of a gene by a fixed gene length, then each sample by its
-number of reads, therefore balancing between the benefits of
-`scaledTPM` and `lengthScaledTPM`.
-
 ## Transcript-to-gene mapping
 
 Bioconductor offers numerous approaches for building a *TxDb* object,
 a transcript database that can be used to link transcripts to genes.
-We used the following unevaluated code chunks to generate a *TxDb*, and
-then we will use the *data.frame* called `txdf` in following
-sections. The version 28 human GTF file was downloaded from the
-GENCODE website when we downloaded the transcripts FASTA file.
+We used the following unevaluated code chunks to generate a *TxDb*,
+used the `select` function with the *TxDb* to produce 
+a corresponding *data.frame* called `txdf` which links transcript IDs
+to gene IDs (in this *TxDb* the transcript IDs are called `TXNAME` and
+the gene IDs are called `GENEID`). The version 28 human GTF file was
+downloaded from the GENCODE website when we downloaded the transcripts
+FASTA file. 
 
 ```{r eval=FALSE}
 library(GenomicFeatures)
@@ -369,7 +381,7 @@ all(rownames(cts) == txdf$TXNAME)
 ```
 
 In order to run *DRIMSeq*, we build a *data.frame* with the gene ID,
-the feature ID, and then columns for each of the samples:
+the feature (transcript) ID, and then columns for each of the samples:
 
 ```{r}
 counts <- data.frame(gene_id=txdf$GENEID,
@@ -431,10 +443,14 @@ d <- dmFilter(d,
 d
 ```
 
-The following plot gives a useful overview:
+The following plot gives a useful overview (Figure
+\@ref(fig:data-hist)). We can see the numbers driving the histogram
+by tabulating the number of times we see a gene ID, then tabulating
+the output again.
 
 ```{r data-hist, out.width="50%", fig.cap="Histogram of the number of genes by number of transcipts."}
 plotData(d)
+table(table(counts(d)$gene_id))
 ```
 
 We create a design matrix, using a design formula and the sample
@@ -508,7 +524,7 @@ res.txp$pvalue <- no.na(res.txp$pvalue)
 ```
 
 We can plot the estimated proportions for one of the significant
-genes, where we can see evidence of switching.
+genes, where we can see evidence of switching (Figure \@ref(fig:plot-prop)).
 
 ```{r plot-prop, out.width="50%", fig.cap="Estimated proportions for one of the significant genes."}
 idx <- which(res$adj_pvalue < 0.05)[1]
@@ -872,7 +888,6 @@ dxr.g$dge <- dxr.g$gene %in% dge.genes
 with(dxr.g, table(sig=qval < .05, dge))
 ```
 
-
 ```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
 knitr::include_graphics("figs/dtu_gene.jpg")
 ```
@@ -1123,15 +1138,12 @@ legend("topright",
 ```{r dge, out.width="75%", echo=FALSE, fig.cap="DGE foo bar"}
 knitr::include_graphics("figs/dge.jpg")
 ```
-
 We additionally assessed Bioconductor and R packages for differential
 gene expression, to determine true positive rate and control of false
 discovery rate. In this analysis, the simulated "DTE" genes (where a single
 transcript was chosen to be differentially expressed) should count for
 differential gene expression, while the simulated "DTU" genes should
-not, as the expression remains constant.
-
-TODO add the supplementary plots for without bias and with less DE
+not, as the expression remains constant. 
 
 : (\#tab:timing-dge) Timing of methods for DGE rounded to the
   minute by per-group sample size. Timing includes data import and
@@ -1165,7 +1177,6 @@ TODO add the supplementary plots for without bias and with less DE
 ```{r dte, out.width="75%", echo=FALSE, fig.cap="DTE foo bar"}
 knitr::include_graphics("figs/dte.jpg")
 ```
-
 Finally, we assessed the Bioconductor and R packages for differential
 transcript expression. While we believe the separation of differential
 transcript usage and differential gene expression described in the

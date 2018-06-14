@@ -1148,15 +1148,51 @@ legend("topright",
 
 # Evaluation of methods for DGE
 
-```{r dge, out.width="75%", echo=FALSE, fig.cap="DGE foo bar"}
-knitr::include_graphics("figs/dge.jpg")
-```
 We additionally assessed Bioconductor and R packages for differential
 gene expression, to determine true positive rate and control of false
-discovery rate. In this analysis, the simulated "DTE" genes (where a single
-transcript was chosen to be differentially expressed) should count for
-differential gene expression, while the simulated "DTU" genes should
-not, as the expression remains constant. 
+discovery rate on the simulated dataset. In this analysis, the
+simulated "DTE" genes (where a single transcript was chosen to be
+differentially expressed) should count for differential gene
+expression, while the simulated "DTU" genes should not, as the
+expression remains constant. 
+
+We compared *DESeq2*, *EBSeq*, *edgeR*, *edgeR-QL* (using the
+quasi-likelihood functions), *limma* with *voom* transformation,
+*SAMseq*, and *sleuth*. We used *tximport* to summarize counts to the
+gene level, and provided all methods other than *DESeq2* and *sleuth*
+with the `lengthScaledTPM` counts matrix. *sleuth* takes as input the
+quantification from *kallisto*, which was run with 30 bootstrap
+samples and bias correction. For gene-level analysis in *sleuth*, the
+argument `aggregation_column="gene_id"` was used. As *DESeq2* has
+specially designed import functions for taking in estimated gene
+counts and an offset from *tximport*, we used this approach. *edgeR*
+and *edgeR-QL* had the same performance using the counts and offset
+approach or the `lengthScaledTPM` approach, so we used the latter for
+code simplicity.  The exact code used to run the different methods can
+be found at the following
+link: <https://github.com/mikelove/swimdown>. Timings for the
+different gene-level methods are presented in Table
+\@ref(tab:timing-dge).
+
+*iCOBRA* plots with true positive rate over false discovery rate for
+gene-level analysis across four different per-group sample sizes are
+presented in Figure \@ref(fig:dge). For the smallest per-group sample
+size of 3, all methods except *DESeq2* and *EBSeq* tended to control
+the FDR, while those two method had, for example, 15% FDR at the
+nominal 10% rate. *SAMseq* with so few samples did not have any
+sensitivity to detect DGE. At the per-group sample size of 6, all
+methods except *DESeq2* and *SAMseq* tended to control the FDR. At this
+sample size, *EBSeq* controlled its FDR. For the largest per-group
+sample sizes, 9 and 12, the performance of many methods remained
+similar as previously, except *sleuth* did not control the nominal 5%
+or 10% FDR. We performed additional experiments to see if the
+performance of *sleuth* at higher sample sizes was related to the
+realistic GC bias parameters used in the simulation, but simulating
+fragments uniformly from the transcriptome revealed the same
+performance at per-group sample sizes 9 and 12 (Supplementary Figure
+2). Reducing the number of DGE, DTE and DTU genes from 10% to 5% each,
+however, did recover control of the FDR at the nominal 5% and 10% FDR
+for *sleuth* (Supplementary Figure 3).
 
 : (\#tab:timing-dge) Timing of methods for DGE rounded to the
   minute by per-group sample size. Timing includes data import and
@@ -1169,8 +1205,40 @@ not, as the expression remains constant.
 | *edgeR*    | <1 | <1 | <1 | <1 |
 | *edgeR-QL* | <1 | <1 | <1 | <1 |
 | *limma*    | <1 | <1 | <1 | <1 |
-| *SAMSeq*   | <1 | <1 | <1 | <1 |
+| *SAMseq*   | <1 | <1 | <1 | <1 |
 | *sleuth*   | 2 | 4 | 5 | 7 |
+
+```{r dge, out.width="75%", echo=FALSE, fig.cap="True positive rate over false discovery rate for differential gene expression of the simulated dataset."}
+knitr::include_graphics("figs/dge.jpg")
+```
+
+# Evaluation of methods for DTE
+
+Finally, we assessed the Bioconductor and R packages for differential
+transcript expression analysis. While we believe the separation of
+differential transcript usage and differential gene expression
+described in the earlier sections of the workflow represent an easily
+interpretable approach, some investigators may prefer to assess
+differential expression on a per-transcript basis. For this
+assessment, all of the simulated non-null transcripts count as DTE,
+whether from the simulated "DGE", "DTE", or "DTU" genes. For most of
+the methods, we simply provided the transcript-level data to the same
+functions as for the DGE analysis. *EBSeq* was provided with the
+number of isoforms per gene. The timing of the methods is presented in
+Table \@ref(tab:timing-dte).
+
+*iCOBRA* plots with the true positive rate over false discovery rate
+for the transcript-level analysis are shown in Figure
+\@ref(fig:dte). The performance at per-group sample size of 3 was
+similar to the gene-level analysis, except *DESeq2* came closer 
+to controlling the FDR and *EBSeq* performed slightly worse than
+before, while the rest of the methods tended to control their FDR.
+At per-group sample size of 6, all of the evaluated methods tended to
+control the FDR, though *DESeq2*, *EBSeq*, *SAMseq*, and *sleuth*
+tended to have higher sensitivity than *edgeR*, *edgeR-QL* and
+*limma*. The same issue of FDR control for *sleuth* was seen in the
+transcript-level analysis as in the gene-level analysis, for per-group
+sample size 9 and 12.
 
 : (\#tab:timing-dte) Timing of methods for DTE rounded to the nearest
   minute by per-group sample size. Timing includes data import.
@@ -1182,22 +1250,12 @@ not, as the expression remains constant.
 | *edgeR*    | <1 | <1 | <1 | <1 |
 | *edgeR-QL* | <1 | <1 | <1 | <1 |
 | *limma*    | <1 | <1 | <1 | <1 |
-| *SAMSeq*   | <1 | <1 | <1 | 1 |
+| *SAMseq*   | <1 | <1 | <1 | 1 |
 | *sleuth*   | 2 | 2 | 2 | 2 |
 
-# Evaluation of methods for DTE
-
-```{r dte, out.width="75%", echo=FALSE, fig.cap="DTE foo bar"}
+```{r dte, out.width="75%", echo=FALSE, fig.cap="True positive rate over false discovery rate for differential transcript expression of the simulated dataset."}
 knitr::include_graphics("figs/dte.jpg")
 ```
-Finally, we assessed the Bioconductor and R packages for differential
-transcript expression. While we believe the separation of differential
-transcript usage and differential gene expression described in the
-earlier sections of the workflow represent an easily interpretable
-approach, some investigators may prefer to assess differential
-expression on a per-transcript basis. For this assessment, all of the
-simulated non-null transcripts count as DTE, whether from the
-simulated "DGE", "DTE", or "DTU" genes.
 
 # Discussion 
 

@@ -78,14 +78,14 @@ can be used to detect differential transcript usage include
 *DEXSeq* (originally designed for differential exon usage) [@Anders2012Detecting], 
 `diffSpliceDGE` from the *edgeR* package [@Robinson2009EdgeR;@McCarthy2012Differential],
 `diffSplice` from the *limma* package [@Smyth2004Linear;@Law2014Voom],
-*DRIMSeq* [@@Nowicka2016DRIMSeq],
-*stageR* [@@Van2017StageR], 
+*DRIMSeq* [@Nowicka2016DRIMSeq],
+*stageR* [@Van2017StageR], 
 *SGSeq* [@Goldstein2016SGSeq],
 and *IsoformSwitchAnalyzeR* [@Vitting2017].
 Others can be found at the 
 [DifferentialSplicing BiocViews](https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing).
 For more information about the Bioconductor project and its core
-infrastructure, please refer to the [@Huber2015Orchestrating].
+infrastructure, please refer to the overview by @Huber2015Orchestrating.
 
 We note that there are numerous other methods for detecting
 differential transcript usage outside of the Bioconductor project. The

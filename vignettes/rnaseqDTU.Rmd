@@ -168,6 +168,11 @@ to generate underlying transcript-level counts, additional uncertainty
 on the transcript-level data is a natural consequence of the
 simulation, as the transcript-level counts must be estimated (the
 underlying transcript counts are not provided to the methods).
+To compare *DRIMSeq* and *DEXSeq* in further detail, we generated
+an additional simulation in which dispersion parameters were assigned
+to genes via matching on the gene-level count, and then all
+transcripts of a gene had counts generated using the same per-gene
+dispersion.
 
 *polyester* was used to simulate paired-end RNA-seq reads for two
 groups of 12 samples each, with realistic fragment GC bias, and with
@@ -982,8 +987,6 @@ various sample sizes. Timing includes only the `diffSplice` step of
 *DEXSeq*, we include the timing of the estimation steps (importing
 counts with *tximport* and filtering takes only a few seconds).
 
-TODO: check why 18 minutes for DRIMSeq three times?
-
 : (\#tab:timing-dtu) Timing of methods for DTU in hours:minutes by per-group sample size.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
@@ -991,6 +994,48 @@ TODO: check why 18 minutes for DRIMSeq three times?
 | *DRIMSeq* | 0:15 | 0:15 | 0:18 | 0:18 |
 | *DEXSeq*  | 0:01 | 0:02 | 0:04 | 0:07 |
 | *SUPPA2*  | 0:16 | 1:18 | 3:48 | 5:33 |
+
+# Evaluation with fixed per-gene dispersion
+
+In order to further investigate performance differences between
+*DRIMSeq* and *DEXSeq*, we generated an additional simulation in which
+genes were assigned dispersion parameters by matching the gene-level
+count to the joint distribution of mean and dispersions on the
+GEUVADIS dataset. Then transcript-level counts were generated with all
+transcripts of a gene being assigned the same dispersion parameter. This
+contrasts with the main simulation, in which each transcript was
+assigned its own dispersion parameter, resulted in heterogeneity of
+dispersion within a gene. As we do not know the degree to which
+transcripts of a gene would have correlated biological variability, we
+include the results for the count-based methods that estimate
+precision/dispersion, *DRIMSeq* and *DEXSeq* on this additional
+simulation.
+
+*DRIMSeq*, which estimates a single precision parameter
+per gene, performed slightly better on this simulation at the
+gene-level (Figure \@ref(fig:dtu-gene-pgd)), although we note that
+*DRIMSeq* nearly controlled FDR at the gene-level in the
+main simulation. *DEXSeq* models different dispersion parameters for
+every transcript, and its performance changes less across the two
+simulations. More improvement was seen for *DRIMSeq* with proportion
+filtering, in the OFDR analysis (Figure \@ref(fig:ofdr-pgd)) and in
+the transcript-level analysis without screening (Figure
+\@ref(fig:dtu-txp-pgd)). Again, we caveat our comparative evaluation
+of *DRIMSeq* and *DEXSeq* by noting that we do not know whether
+various real RNA-seq experiments will more closely reflect within-gene
+heterogeneous dispersion or fixed dispersion, or something in between.
+
+```{r dtu-gene-pgd, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
+knitr::include_graphics("figs/dtu_gene_pergene_disp.jpg")
+```
+
+```{r ofdr-pgd, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target, on the simulation with fixed per-gene dispersions."}
+knitr::include_graphics("figs/ofdr_pergene_disp.pdf")
+```
+
+```{r dtu-txp-pgd, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
+knitr::include_graphics("figs/dtu_txp_pergene_disp.jpg")
+```
 
 # DTU analysis complements DGE analysis
 

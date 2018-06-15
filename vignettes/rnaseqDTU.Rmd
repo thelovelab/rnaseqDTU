@@ -73,11 +73,15 @@ Bioconductor project address differential gene expression, there are
 fewer workflows for performing a differential transcript usage analysis,
 which provides critical and complementary information to a 
 gene-level analysis. Some of the existing Bioconductor packages and functions that 
-can be used to detect differential transcript usage include *BitSeq*, 
-*DEXSeq* (originally designed for differential exon usage), `diffSpliceDGE` 
-from the *edgeR* package, `diffSplice` from the *limma* package, *DRIMSeq*, 
-*stageR*, and *IsoformSwitchAnalyzeR* 
-[@Glaus2012Identifying;@Anders2012Detecting;@Robinson2009EdgeR;@McCarthy2012Differential;@Smyth2004Linear;@Law2014Voom;@Nowicka2016DRIMSeq;@Van2017StageR;@Vitting2017]. 
+can be used to detect differential transcript usage include 
+*BitSeq* [@Glaus2012Identifying], 
+*DEXSeq* (originally designed for differential exon usage) [@Anders2012Detecting], 
+`diffSpliceDGE` from the *edgeR* package [@Robinson2009EdgeR;@McCarthy2012Differential],
+`diffSplice` from the *limma* package [@Smyth2004Linear;@Law2014Voom],
+*DRIMSeq* [@@Nowicka2016DRIMSeq],
+*stageR* [@@Van2017StageR], 
+*SGSeq* [@Goldstein2016SGSeq],
+and *IsoformSwitchAnalyzeR* [@Vitting2017].
 Others can be found at the 
 [DifferentialSplicing BiocViews](https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing).
 For more information about the Bioconductor project and its core

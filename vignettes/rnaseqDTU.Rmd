@@ -79,10 +79,18 @@ can be used to detect differential transcript usage include
 `diffSpliceDGE` from the *edgeR* package [@Robinson2009EdgeR;@McCarthy2012Differential],
 `diffSplice` from the *limma* package [@Smyth2004Linear;@Law2014Voom],
 *DRIMSeq* [@Nowicka2016DRIMSeq],
-*stageR* [@Van2017StageR], 
-*SGSeq* [@Goldstein2016SGSeq],
-and *IsoformSwitchAnalyzeR* [@Vitting2017].
-Others can be found at the 
+*stageR* [@Van2017StageR], and
+*SGSeq* [@Goldstein2016SGSeq].
+The Bioconductor package *IsoformSwitchAnalyzeR* [@Vitting2017] is
+well documented and can be seen as an alternative to this workflow; 
+*IsoformSwitchAnalyzeR* allows for import of data from various 
+quantification methods, including *Salmon*, and allows for statistical
+inference using *DRIMSeq*, as well as a rank-based statistical test of
+transcript proportions. In addition, *IsoformSwitchAnalyzeR* includes
+functions for obtaining the nucleotide and amino acid sequence
+consequences of isoform switching, which is not covered in this
+workflow.
+Other packages related to splicing can be found at the 
 [DifferentialSplicing BiocViews](https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing).
 For more information about the Bioconductor project and its core
 infrastructure, please refer to the overview by @Huber2015Orchestrating.
@@ -1361,14 +1369,19 @@ entail. *stageR* then provides error control for an overall false
 discovery rate, assuming that the underlying tests are well
 calibrated.
 
-One limitation of the workflow presented here is that, in contrast to
-other methods such as the standard *DEXSeq* analysis or *SUPPA2*, here
-we consider and detect expression switching between annotated
-transcript. Other methods such as *DEXSeq* and *SUPPA2* may benefit in
+One potential limitation of this workflow is that, in contrast to
+other methods such as the standard *DEXSeq* analysis, *SUPPA2* or
+*LeafCutter* [@Li2018Leaf], 
+here we considered and detected expression switching between annotated
+transcripts. Other methods such as *DEXSeq* (exon-based),
+*SUPPA2*, or *LeafCutter* may benefit in
 terms of power and interpretability from performing statistical
-analysis directly on exon usage or splice events, whereas the pipeline
-presented here would require further processing to attribute
-transcript usage changes to specific splice events.
+analysis directly on exon usage or splice events. Methods such
+as *DEXSeq* (exon-based) and *LeafCutter* benefit in the ability to detect
+un-annotated events.
+The workflow presented here would require further processing to
+attribute transcript usage changes to specific splice events, and is
+limited to considering the estimated abundance of annotated transcripts.
 
 # Session information
 

@@ -72,36 +72,38 @@ biomedical researchers. While many tutorials and workflows in the
 Bioconductor project address differential gene expression, there are
 fewer workflows for performing a differential transcript usage analysis,
 which provides critical and complementary information to a 
-gene-level analysis. Some of the existing Bioconductor packages and vignettes that 
+gene-level analysis. Some of the existing Bioconductor packages and functions that 
 can be used to detect differential transcript usage include *BitSeq*, 
 *DEXSeq* (originally designed for differential exon usage), `diffSpliceDGE` 
 from the *edgeR* package, `diffSplice` from the *limma* package, *DRIMSeq*, 
-*stageR*, and *IsoformSwitchAnalyzeR* (cite). 
-Others can be found at the following link: 
-<https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing>.
+*stageR*, and *IsoformSwitchAnalyzeR* 
+[@Glaus2012Identifying;@Anders2012Detecting;@Robinson2009EdgeR;@McCarthy2012Differential;@Smyth2004Linear;@Law2014Voom;@Nowicka2016DRIMSeq;@Van2017StageR;@Vitting2017]. 
+Others can be found at the 
+[DifferentialSplicing BiocViews](https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing).
 For more information about the Bioconductor project and its core
-infrastructure, please refer to the (cite latest Bioc paper).
+infrastructure, please refer to the [@Huber2015Orchestrating].
 
 We note that there are numerous other methods for detecting
 differential transcript usage outside of the Bioconductor project. The
-*DRIMSeq* publication (cite) is a good reference and has descriptions and
-comparisons with many such methods.
+*DRIMSeq* publication is a good reference for these, having descriptions and
+comparisons with many current methods [@Nowicka2016DRIMSeq].
 This workflow will build on the methods and vignettes from three
 Bioconductor packages: *DRIMSeq*, *DEXSeq*, and *stageR*.
 
 Previously, some of the developers of the Bioconductor packages 
-*edgeR* and *DESeq2* (cite) have collaborated to develop the
-*tximport* package (cite) for summarizing the output of fast
+*edgeR* and *DESeq2* have collaborated to develop the
+*tximport* package [@Soneson2015Differential] for summarizing the output of fast
 transcript-level quantifiers, such as *Salmon* [@Patro2017Salmon],
-*Sailfish*, and *kallisto* (cite). The *tximport* package focuses on
+*Sailfish* [@Patro2014Sailfish], and *kallisto* [@Bray2016Near]. The *tximport* package focuses on
 preparing estimated transcript-level counts, abundances
 and effective transcript lengths, for gene-level statistical analysis
-using *edgeR*, *DESeq2* or *limma-voom* (cite). *tximport* produces an
+using *edgeR* [@Robinson2009EdgeR], *DESeq2* [@Love2014Moderated] or
+*limma-voom* [@Law2014Voom]. *tximport* produces an 
 offset matrix to accompany gene-level counts, that accounts for
-various RNA-seq biases (cite Salmon) as well as differences in
+a number of RNA-seq biases as well as differences in
 transcript usage among transcripts of different length that would bias
-an estimator of fold change based on the gene-level counts (cite
-Trapnell). *tximport* can alternatively produce a matrix of data that
+an estimator of fold change based on the gene-level counts [@Trapnell2013Differential].
+*tximport* can alternatively produce a matrix of data that
 is roughly on the scale of counts, by scaling TPM abundances to add up to
 the total number of reads. This counts-from-abundance approach
 directly corrects for technical biases and differential transcript
@@ -117,9 +119,10 @@ Bioconductor provides a statistical framework to *screen* at the
 gene-level for differential transcript usage with gene-level adjusted p-values,
 followed by *confirmation* of which transcripts within the significant
 genes show differential usage with transcript-level adjusted p-values
-(cite). The method provides _overall false discovery rate_ error
-control for such a two-stage 
-procedure, which will be discussed in more detail later in the
+[@Van2017StageR]. The method controls the _overall false discovery
+rate_ (OFDR)
+[@Heller2009] for such a two-stage procedure, which will be discussed
+in more detail later in the 
 workflow. We believe that *stageR* represents a principled approach to
 analyzing transcript usage changes, as the methods can be evaluated
 against a target error rate in a manner that mimics how the methods
@@ -138,7 +141,9 @@ package. For the workflow, we use data which is simulated, so that
 we can also evaluate the performance of methods for differential
 transcript usage, as well as differential gene and transcript
 expression. The simulation was constructed using experimental
-parameters estimated from the GEUVADIS dataset (cite), including the
+parameters estimated from the GEUVADIS project RNA-seq dataset
+[@Lappalainen2013Transcriptome] quantified by the *recount2* project
+[@Collado2017Recount], including the 
 expression levels of the transcripts, the amount of biological
 variability of expression levels across samples, and realistic coverage
 of reads along the transcript.
@@ -151,18 +156,20 @@ First we describe details of the simulated data, which will be used in
 the following workflow. Understanding the details of the
 simulation will be useful for assessing the methods in the later sections.
 All of the code used to simulate RNA-seq experiments and write
-paired-end reads can be found at the following
-link: <https://github.com/mikelove/swimdown>. 
-*Salmon* was used to estimate transcript-level abundances for a single
-sample (ERR188297) of the GEUVADIS project (cite GEUVADIS, Salmon), and this was used as
+paired-end reads can be found at an associated GitHub repository for
+the simulation code [@swimdown].
+*Salmon* [@Patro2017Salmon] was used to estimate transcript-level abundances for a single
+sample (ERR188297) of the GEUVADIS project
+[@Lappalainen2013Transcriptome], and this was used as
 a baseline for transcript abundances in the simulation. Transcripts
 which were associated with estimated counts less than 10 had abundance
 thresholded to 0, all other transcripts were considered "expressed".
-*alpine* was used to estimate realistic fragment GC bias from 12 samples from the GEUVADIS
-project from the same center [@Love2016Alpine]. *DESeq2* was
+*alpine* [@Love2016Alpine] was used to estimate realistic fragment GC
+bias from 12 samples from the GEUVADIS 
+project from the same center. *DESeq2* [@Love2014Moderated] was
 used to estimate mean and dispersion parameters for a Negative
 Binomial distribution for gene-level counts for 462 GEUVADIS samples
-provided by the *recount2* project (cite DESeq2, recount2).
+provided by the *recount2* project [@Collado2017Recount].
 Note that, while gene-level dispersion estimates were used
 to generate underlying transcript-level counts, additional uncertainty
 on the transcript-level data is a natural consequence of the
@@ -174,19 +181,18 @@ to genes via matching on the gene-level count, and then all
 transcripts of a gene had counts generated using the same per-gene
 dispersion.
 
-*polyester* was used to simulate paired-end RNA-seq reads for two
+*polyester* [@Frazee2015Polyester] was used to simulate paired-end RNA-seq reads for two
 groups of 12 samples each, with realistic fragment GC bias, and with
 dispersion on transcript-level counts following the joint distribution
-of mean and dispersion values estimated from the GEUVADIS samples (cite). 
+of mean and dispersion values estimated from the GEUVADIS samples. 
 The first sample for group 1 and the first sample for group 2 followed the
 realistic GC bias profile of the same sample, and so on for all 12
 samples. This pairing of the samples was used to generate balanced
 data, but not used in the statistical analysis. 
-*countsimQC* was used to
+*countsimQC* [@Soneson2017Towards] was used to
 examine the properties of the simulation relative to the dataset used
 for parameter estimation, and the full report can be accessed at the
-following link: <https://github.com/mikelove/swimdown/countsimqc>
-(cite countsimqc).
+associated GitHub repository for simulation code [@swimdown].
 
 Differential expression across two groups was generated as follows:
 70% of the genes were set as "null genes", where abundance was not

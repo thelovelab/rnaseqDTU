@@ -1018,7 +1018,7 @@ gene-level (Figure \@ref(fig:dtu-gene-pgd)), although we note that
 main simulation. *DEXSeq* models different dispersion parameters for
 every transcript, and its performance changes less across the two
 simulations. More improvement was seen for *DRIMSeq* with proportion
-filtering, in the OFDR analysis (Figure \@ref(fig:ofdr-pgd)) and in
+SD filtering, in the OFDR analysis (Figure \@ref(fig:ofdr-pgd)) and in
 the transcript-level analysis without screening (Figure
 \@ref(fig:dtu-txp-pgd)). Again, we caveat our comparative evaluation
 of *DRIMSeq* and *DEXSeq* by noting that we do not know whether

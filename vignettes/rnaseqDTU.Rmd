@@ -304,8 +304,8 @@ head(files)
 
 We can then import transcript-level counts using *tximport*.
 We suggest to generate counts from abundance, using the
-`scaledTPM` method described by Soneson et al (cite). As described
-above, the `countsFromAbundance` option of *tximport* uses estimated
+`scaledTPM` method described by @Soneson2015Differential. 
+The `countsFromAbundance` option of *tximport* uses estimated
 abundances to generate roughly count-scaled data, such that each
 column will sum to the number of reads mapped for that library. 
 We recommend `scaledTPM` for differential transcript usage
@@ -685,15 +685,15 @@ analysis before the modeling begins.
 ## DEXSeq
 
 The *DEXSeq* package was originally designed for detecting
-differential exon usage [@Anders2012DEXSeq], but can also be adapted to run on estimated
-transcript counts, in order to detect DTU. This
-usage of *DEXSeq* was evaluated by (cite Soneson isoform filtering) in a
-publication discussing the benefits in terms of FDR control of
-filtering lowly expressed transcripts for a transcript-level
-analysis. As the usage is quite different than its intended usage, we
-also benchmarked its performance here. We begin with the *DRIMSeq*
-filtered object, as these filters are intuitive and useful for paring
-down the analysis. 
+differential exon usage [@Anders2012DEXSeq], but can also be adapted
+to run on estimated transcript counts, in order to detect DTU. The
+usage of *DEXSeq* on transcript counts was evaluated by
+@Soneson2016Isoform, showing the benefits in FDR control from
+filtering lowly expressed transcripts for a transcript-level analysis.
+We benchmarked *DEXSeq* here, beginning with the *DRIMSeq*
+filtered object, as these filters are intuitive, they greatly speed up
+the analysis, and such filtering was shown to be beneficial in FDR
+control. 
 
 The two factors of working on isoform counts rather than
 individual exons and using the *DRIMSeq* filtering options
@@ -903,6 +903,15 @@ qval <- perGeneQValue(suppa.dxr)
 suppa.g <- data.frame(gene=names(qval), qval=qval)
 ```
 
+## Citing methods in published research
+
+This concludes the DTU section of the workflow. If you use *DRIMSeq*
+[@Nowicka2016DRIMSeq], *DEXSeq* [@Anders2012DEXSeq], *SUPPA2*
+[@Trincado2018SUPPA2], *stageR* [@Van2017StageR], *tximport*
+[@Soneson2015Differential], or *Salmon* [@Patro2017Salmon] in
+published research, please cite the relevant methods publications,
+which can be found in the References section of this workflow.
+
 # Evaluation of methods for DTU
 
 We begin the evaluation by noting that the methods did not call many
@@ -930,9 +939,9 @@ with(dxr.g, table(sig=qval < .05, dge))
 knitr::include_graphics("figs/dtu_gene.jpg")
 ```
 
-The *iCOBRA* package was used to construct plots to assess the true
+The *iCOBRA* package [@Soneson2016iCOBRA] was used to construct plots to assess the true
 positive rate over the false discovery rate at three nominal FDR
-thresholds: 1%, 5%, and 10% (cite).  The code for evaluating all
+thresholds: 1%, 5%, and 10%.  The code for evaluating all
 methods and constructing the *iCOBRA* plots is included in the
 repository at the following
 link: <https://github.com/mikelove/swimdown>.
@@ -1052,7 +1061,7 @@ demonstrate how differential transcript usage, summarized to the
 gene-level, can be visualized with respect to differential gene
 expression analysis results. We use *tximport* and summarize counts to
 the gene level and compute an average transcript length offset for
-count-based methods (cite). We will then show code for using *DESeq2*
+count-based methods [@Soneson2015Differential]. We will then show code for using *DESeq2*
 and *edgeR* to assess differential gene expression. Because we have
 simulated the genes according to three different categories, we can
 color the final plot by the true simulated state of the genes. We note
@@ -1221,12 +1230,18 @@ differentially expressed) should count for differential gene
 expression, while the simulated "DTU" genes should not, as the
 expression remains constant. 
 
-We compared *DESeq2*, *EBSeq*, *edgeR*, *edgeR-QL* (using the
-quasi-likelihood functions), *limma* with *voom* transformation,
-*SAMseq*, and *sleuth*. We used *tximport* to summarize counts to the
+We compared 
+*DESeq2* [@Love2014Moderated], 
+*EBSeq* [@Leng2013EBSeq], 
+*edgeR* [@Robinson2009EdgeR], 
+*edgeR-QL* (using the quasi-likelihood functions) [@Lund2012Detecting], 
+*limma* with *voom* transformation [@Law2014Voom],
+*SAMseq* [@Li2013Finding], 
+and *sleuth* [@Pimentel2017Sleuth]. 
+We used *tximport* to summarize counts to the
 gene level, and provided all methods other than *DESeq2* and *sleuth*
 with the `lengthScaledTPM` counts matrix. *sleuth* takes as input the
-quantification from *kallisto*, which was run with 30 bootstrap
+quantification from *kallisto* [@Bray2016Near], which was run with 30 bootstrap
 samples and bias correction. For gene-level analysis in *sleuth*, the
 argument `aggregation_column="gene_id"` was used. As *DESeq2* has
 specially designed import functions for taking in estimated gene

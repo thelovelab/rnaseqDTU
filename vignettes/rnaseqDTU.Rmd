@@ -989,20 +989,19 @@ the observed OFDR for *DRIMSeq* was otherwise around 20-25%.
 knitr::include_graphics("figs/ofdr.pdf")
 ```
 
-Finally, we assessed the normal false discovery rate at the
-transcript-level, without using stage-wise testing, for all three
-methods (including post-hoc filtering option for *DRIMSeq*), again
-using *iCOBRA*.  This analysis looked across the transcript-level
-adjusted p-values for DTU without using the information associating
-transcripts to gene. *SUPPA2* again tended to control its FDR, as did
+Finally, we assessed the transcript-level adjusted p-values for DTU
+directly from *DRIMSeq*, *DEXSeq*, and *SUPPA2*. This analysis did not
+use *stageR* for stage-wise testing, and so we compute the standard
+FDR, where the unit of false discovery is the *transcript*,
+rather than the OFDR where the unit of false discovery is the *gene*.
+In general, we recommend using the *stageR* results, as it allows
+error control on a natural procedure of looking across genes, then
+within genes for which transcripts participate in DTU.
+*SUPPA2* again tended to control its FDR, as did
 *DEXSeq* (Figure \@ref(fig:dtu-txp)).  *DRIMSeq* with
 proportion SD filtering approached the target FDR as sample
 size increased for the 5% and 10% targets, while without filtering,
-the observed FDR was always higher than the target.  While we
-performed this last evaluation on the independently adjusted p-values
-from the transcript-level, we recommend instead to use the stage-wise
-framework and adjusted p-values provided by the *stageR* method,
-assessed in Figure \@ref(fig:dtu-ofdr).
+the observed FDR was always higher than the target.
 
 ```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering) and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp.jpg")

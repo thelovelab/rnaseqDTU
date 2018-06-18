@@ -18,7 +18,7 @@ vignette: >
 abstract: |
   Detection of differential transcript usage (DTU) from RNA-seq data
   is an important bioinformatic analysis that complements differential
-  gene expression analysis. Here we present a simple workflow using a
+  gene expression analysis **NOTE: Do we want to mention DTE in the abstract?**. Here we present a simple workflow using a
   set of existing R/Bioconductor packages for analysis of DTU. We
   show how these packages can be used downstream of RNA-seq
   quantification using the Salmon software package. The entire
@@ -229,7 +229,7 @@ of a gene, this counted also as DGE and not as DTU, but if there were
 other isoforms which are expressed, such genes counted for both DGE
 and DTU, as the proportion of expression among the isoforms was
 affected. For 10% of genes, differential transcript
-usage was constructed by exchanging the abundance of two expressed
+usage was constructed by exchanging the abundance **NOTE: In terms of count, or TPM?** of two expressed
 isoforms, or, if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
 genes counted for DTU and DTE, but not for DGE. An MA plot of the
@@ -279,7 +279,7 @@ reference chromosomes". When downloading the FASTA file, it is useful
 to download the corresponding GTF file, as this will be used in later
 sections. 
 
-To build the *Salmon* index, we used the following command:
+To build the *Salmon* index, we used the following command **NOTE: Maybe note here that this will discard sequence duplicate transcripts**:
 
 ```
 salmon index -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
@@ -944,12 +944,12 @@ which can be found in the References section of this workflow.
 
 # Evaluation of methods for DTU
 
-We begin the evaluation by noting that the methods correctly did not call many
-of the DGE genes as DTU. The object `dge.genes` contains the names of
-all the genes in which all the isoforms were differentially expressed
-by an equal amount (so not DTU). *SUPPA2* output is not included in
-the workflow, but it only reported one of the DGE genes as DTU out of
-851 with an adjusted p-value less than 0.05. 
+We begin the evaluation by noting that all of the methods correctly avoided
+calling many of the DGE event as DTU events. The object `dge.genes` contains the names
+of all the genes in which all the isoforms were differentially expressed by an
+equal amount (so not DTU). *SUPPA2* output is not included in the workflow, but
+it only reported one of the DGE genes as DTU out of 851 with an adjusted p-value
+less than 0.05.
 
 The number of DGE genes called in DTU analysis with *DRIMSeq*:
 
@@ -989,7 +989,7 @@ should be considered with a method's sensitivity in mind as well.
 For example, for the 6 vs 6 comparison, *DRIMSeq* had observed FDR of 12%
 at nominal 10%, meaning that for every 100 genes reported as
 containing DTU, the method reported 2 extra genes more than its
-target. *DRIMSeq* and *DEXSeq* were the most sensitive methods in
+target **NOTE: Maybe mention the sensitivity here?**. *DRIMSeq* and *DEXSeq* were the most sensitive methods in
 recovering gene-level DTU in this simulation.
 
 We assessed the overall false discovery rate (OFDR) procedure

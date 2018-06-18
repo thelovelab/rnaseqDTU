@@ -18,7 +18,7 @@ vignette: >
 abstract: |
   Detection of differential transcript usage (DTU) from RNA-seq data
   is an important bioinformatic analysis that complements differential
-  gene expression analysis **NOTE: Do we want to mention DTE in the abstract?**. Here we present a simple workflow using a
+  gene expression analysis. Here we present a simple workflow using a
   set of existing R/Bioconductor packages for analysis of DTU. We
   show how these packages can be used downstream of RNA-seq
   quantification using the Salmon software package. The entire
@@ -230,7 +230,7 @@ of a gene, this counted also as DGE and not as DTU, but if there were
 other isoforms which are expressed, such genes counted for both DGE
 and DTU, as the proportion of expression among the isoforms was
 affected. For 10% of genes, differential transcript
-usage was constructed by exchanging the abundance **NOTE: In terms of count, or TPM?** of two expressed
+usage was constructed by exchanging the TPM abundance of two expressed
 isoforms, or, if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. Such
 genes counted for DTU and DTE, but not for DGE. An MA plot of the
@@ -281,7 +281,9 @@ reference chromosomes". When downloading the FASTA file, it is useful
 to download the corresponding GTF file, as this will be used in later
 sections. 
 
-To build the *Salmon* index, we used the following command **NOTE: Maybe note here that this will discard sequence duplicate transcripts**:
+To build the *Salmon* index, we used the following command. Recent
+versions of *Salmon* will discard identical sequence duplicate
+transcripts, and keep a log of these within the index directory.
 
 ```
 salmon index -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
@@ -1000,11 +1002,12 @@ smallest sample size, *DEXSeq* controlled except for the 1% threshold
 in the smallest sample size case, and *DRIMSeq* exceeded its FDR but approached
 the target for larger sample sizes (Figure
 \@ref(fig:dtu-gene)). Exceeding the nominal FDR level by a small amount
-should be considered with a method's sensitivity in mind as well.
+should be considered with a method's relative sensitivity in mind as
+well, compared to other methods.
 For example, for the 6 vs 6 comparison, *DRIMSeq* had observed FDR of 12%
 at nominal 10%, meaning that for every 100 genes reported as
 containing DTU, the method reported 2 extra genes more than its
-target **NOTE: Maybe mention the sensitivity here?**. *DRIMSeq* and *DEXSeq* were the most sensitive methods in
+target. *DRIMSeq* and *DEXSeq* were the most sensitive methods in
 recovering gene-level DTU in this simulation.
 
 We assessed the overall false discovery rate (OFDR) procedure
@@ -1423,6 +1426,23 @@ this document.
 ```{r}
 devtools::session_info()
 ```
+
+# Software versions
+
+The statistical methods were evaluated using the following software versions: 
+*DRIMSeq* - 1.8.0,
+*DEXSeq* - 1.26.0,
+*stageR* - 1.2.21,
+*tximport* - 1.8.0,
+*DESeq2* - 1.20.0,
+*EBSeq* - 1.20.0,
+*edgeR* - 3.22.2,
+*limma* - 3.36.1,
+*samr* - 2.0,
+*sleuth* - 0.29.0,
+*SUPPA2* - 2.3.
+The samples were quantified with *Salmon* version 0.10.0 and
+*kallisto* version 0.44.0.
 
 # Data availability 
 

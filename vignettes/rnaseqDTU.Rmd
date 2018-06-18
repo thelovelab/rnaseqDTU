@@ -212,29 +212,29 @@ for parameter estimation, and the full report can be accessed at the
 associated GitHub repository for simulation code [@swimdown].
 
 Differential expression across two groups was generated as follows:
-70% of the genes were set as "null genes", where abundance was not
+70% of the genes were set as null genes, where abundance was not
 changed across the two groups. For 10% of genes, all isoforms were
 differentially expressed at a log fold change between 1 and 2.58 (fold
-change between 2 and 6). The set of transcripts in these genes were
+change between 2 and 6). The set of transcripts in these genes was
 classified as DGE (differential 
-gene expression) by construction, and the expressed genes were also
+gene expression) by construction, and the expressed transcripts were also
 DTE (differential transcript expression), but they did not count as
 DTU (differential transcript usage), as the proportions within the
-gene remain constant. To simulate balanced differential expression, one of
+gene remained constant. To simulate balanced differential expression, one of
 the two groups was randomly chosen to be the baseline, and the other group
 would have its counts multiplied by the fold change. For 10% of genes,
 a single expressed isoform was differentially expressed at a log fold
 change between 1 and 2.58. This set of transcripts was DTE by
 construction. If the chosen transcript was the only expressed isoform
 of a gene, this counted also as DGE and not as DTU, but if there were
-other isoforms that were expressed, such genes counted for both DGE
+other isoforms that were expressed, this counted for both DGE
 and DTU, as the proportion of expression among the isoforms was
 affected. For 10% of genes, differential transcript
 usage was constructed by exchanging the TPM abundance of two expressed
 isoforms, or, if only one isoform was expressed, exchanging the
-abundance of the expressed isoform with a non-expressed one. Such
-genes counted for DTU and DTE, but not for DGE. An MA plot of the
-simulated abundances for the two groups is shown in Figure
+abundance of the expressed isoform with a non-expressed one. 
+This counted for DTU and DTE, but not for DGE. An MA plot of the
+simulated transcript abundances for the two groups is shown in Figure
 \@ref(fig:ma-simulated).
 
 ```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of DGE, DTE, and DTU, here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
@@ -1030,7 +1030,7 @@ Finally, we assessed the transcript-level adjusted p-values for DTU
 directly from *DRIMSeq*, *DEXSeq*, and *SUPPA2*. This analysis did not
 use *stageR* for stage-wise testing, and so we compute the standard
 FDR, where the unit of false discovery is the *transcript*,
-rather than the OFDR where the unit of false discovery is the *gene*.
+in contrast to the OFDR where the unit of false discovery is the *gene*.
 In general, we recommend using the *stageR* results, as it allows
 error control on a natural procedure of looking across genes, then
 within genes for which transcripts participate in DTU.

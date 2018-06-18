@@ -669,7 +669,7 @@ steps. There are also convenience functions *getSignificantGenes* and
 library(stageR)
 stageRObj <- stageRTx(pScreen=pScreen, pConfirmation=pConfirmation,
                       pScreenAdjusted=FALSE, tx2gene=tx2gene)
-stageRObj <- stageWiseAdjustment(object=stageRObj, method="dtu", alpha=0.05)
+stageRObj <- stageWiseAdjustment(stageRObj, method="dtu", alpha=0.05)
 suppressWarnings({
   drim.padj <- getAdjustedPValues(stageRObj, order=FALSE,
                                   onlySignificantGenes=TRUE)
@@ -848,9 +848,10 @@ not participate in DTU.
 ```{r}
 stageRObj <- stageRTx(pScreen=pScreen, pConfirmation=pConfirmation,
                       pScreenAdjusted=TRUE, tx2gene=tx2gene)
-stageRObj <- stageWiseAdjustment(object=stageRObj, method="dtu", alpha=0.05)
+stageRObj <- stageWiseAdjustment(stageRObj, method="dtu", alpha=0.05)
 suppressWarnings({
-  dex.padj <- getAdjustedPValues(stageRObj, order=FALSE, onlySignificantGenes=TRUE)
+  dex.padj <- getAdjustedPValues(stageRObj, order=FALSE,
+                                 onlySignificantGenes=TRUE)
 })
 head(dex.padj)
 ```
@@ -904,7 +905,8 @@ containing the TPMs for each group. The final line performs the
 differential analysis.
 
 ```
-python suppa.py generateEvents -f ioi -i gencode.v28.annotation.gtf -o suppa/isoforms
+python suppa.py generateEvents -f ioi -i gencode.v28.annotation.gtf \
+  -o suppa/isoforms
 python suppa.py psiPerIsoform -g gencode.v28.annotation.gtf \
   -e suppa/group1.tpm -o suppa/group1
 python suppa.py psiPerIsoform -g gencode.v28.annotation.gtf \
@@ -1286,14 +1288,15 @@ We compared
 *limma* with *voom* transformation [@Law2014Voom],
 *SAMseq* [@Li2013Finding], 
 and *sleuth* [@Pimentel2017Sleuth]. 
-We used *tximport* to summarize counts to the
+We used *tximport* to summarize *Salmon* abundances to the
 gene level, and provided all methods other than *DESeq2* and *sleuth*
 with the `lengthScaledTPM` count matrix. *sleuth* takes as input the
 quantification from *kallisto* [@Bray2016Near], which was run with 30 bootstrap
 samples and bias correction. For gene-level analysis in *sleuth*, the
 argument `aggregation_column="gene_id"` was used. As *DESeq2* has
 specially designed import functions for taking in estimated gene
-counts and an offset from *tximport*, we used this approach. *edgeR*
+counts and an offset from *tximport*, we used this approach to provide
+*Salmon* summarized gene-level counts and an offset. *edgeR*
 and *edgeR-QL* had the same performance using the counts and offset
 approach or the `lengthScaledTPM` approach, so we used the latter for
 code simplicity.  The exact code used to run the different methods can

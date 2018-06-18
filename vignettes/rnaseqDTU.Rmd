@@ -22,7 +22,7 @@ abstract: |
   set of existing R/Bioconductor packages for analysis of DTU. We
   show how these packages can be used downstream of RNA-seq
   quantification using the Salmon software package. The entire
-  pipeline is fast, benefiting from previous inference steps by Salmon
+  pipeline is fast, benefiting from inference steps by Salmon
   to quantify expression at the transcript level. The workflow
   includes live, runnable code chunks for analysis using DRIMSeq and
   DEXSeq, as well as for performing two-stage testing of DTU using the
@@ -66,9 +66,9 @@ samples in total gene expression -- the total expression
 produced by all isoforms of a gene -- and additionally differences in
 transcript usage within a gene. If the amount of expression
 switches among two or more isoforms of a gene, then the total gene
-expression may not change by a detectable amount, but such
-differential transcript usage is still of interest to biological and
-biomedical researchers. While many tutorials and workflows in the
+expression may not change by a detectable amount, but 
+the differential transcript usage is nevertheless biologically relevant.
+While many tutorials and workflows in the
 Bioconductor project address differential gene expression, there are
 fewer workflows for performing a differential transcript usage analysis,
 which provides critical and complementary information to a 
@@ -114,10 +114,12 @@ using *edgeR* [@Robinson2009EdgeR], *DESeq2* [@Love2014Moderated] or
 offset matrix to accompany gene-level counts, that accounts for
 a number of RNA-seq biases as well as differences in
 transcript usage among transcripts of different length that would bias
-an estimator of fold change based on the gene-level counts [@Trapnell2013Differential].
+an estimator of gene fold change based on the gene-level counts
+[@Trapnell2013Differential]. 
 *tximport* can alternatively produce a matrix of data that
-is roughly on the scale of counts, by scaling TPM abundances to add up to
-the total number of reads. This counts-from-abundance approach
+is roughly on the scale of counts, by scaling transcript-per-million
+(TPM) abundances to add up to 
+the total number of mapped reads. This counts-from-abundance approach
 directly corrects for technical biases and differential transcript
 usage across samples, obviating the need for the accompanying offset matrix.
 
@@ -138,7 +140,7 @@ in more detail later in the
 workflow. We believe that *stageR* represents a principled approach to
 analyzing transcript usage changes, as the methods can be evaluated
 against a target error rate in a manner that mimics how the methods
-will actually be used in practice. That is, following rejection of
+will be used in practice. That is, following rejection of
 the null hypothesis at the gene-level, investigators would likely
 desire to know which transcripts within a gene participated in the
 differential usage.
@@ -152,12 +154,12 @@ testing of differential transcript usage using the *stageR*
 package. For the workflow, we use data which is simulated, so that 
 we can also evaluate the performance of methods for differential
 transcript usage, as well as differential gene and transcript
-expression. The simulation was constructed using experimental
+expression. The simulation was constructed using distributional
 parameters estimated from the GEUVADIS project RNA-seq dataset
 [@Lappalainen2013Transcriptome] quantified by the *recount2* project
 [@Collado2017Recount], including the 
 expression levels of the transcripts, the amount of biological
-variability of expression levels across samples, and realistic coverage
+variability of gene expression levels across samples, and realistic coverage
 of reads along the transcript.
 
 # Methods
@@ -169,7 +171,8 @@ the following workflow. Understanding the details of the
 simulation will be useful for assessing the methods in the later sections.
 All of the code used to simulate RNA-seq experiments and write
 paired-end reads to FASTQ files can be found at an associated GitHub repository for
-the simulation code [@swimdown].
+the simulation code [@swimdown], and the reads and quantification
+files can be downloaded from Zenodo [@swimdowndata].
 *Salmon* [@Patro2017Salmon] was used to estimate transcript-level abundances for a single
 sample (ERR188297) of the GEUVADIS project
 [@Lappalainen2013Transcriptome], and this was used as
@@ -178,8 +181,10 @@ which were associated with estimated counts less than 10 had abundance
 thresholded to 0, all other transcripts were considered "expressed".
 *alpine* [@Love2016Alpine] was used to estimate realistic fragment GC
 bias from 12 samples from the GEUVADIS 
-project from the same center. *DESeq2* [@Love2014Moderated] was
-used to estimate mean and dispersion parameters for a Negative
+project, all from the same sequencing center (the first 12 samples from
+CNAG-CRG in Supplementary Table 2 from @Love2016Alpine). 
+*DESeq2* [@Love2014Moderated] was used to estimate mean and dispersion
+parameters for a Negative 
 Binomial distribution for gene-level counts for 462 GEUVADIS samples
 provided by the *recount2* project [@Collado2017Recount].
 Note that, while gene-level dispersion estimates were used
@@ -187,18 +192,17 @@ to generate underlying transcript-level counts, additional uncertainty
 on the transcript-level data is a natural consequence of the
 simulation, as the transcript-level counts must be estimated (the
 underlying transcript counts are not provided to the methods).
-To compare *DRIMSeq* and *DEXSeq* in further detail, we generated
-an additional simulation in which dispersion parameters were assigned
-to genes via matching on the gene-level count, and then all
-transcripts of a gene had counts generated using the same per-gene
-dispersion.
 
 *polyester* [@Frazee2015Polyester] was used to simulate paired-end RNA-seq reads for two
 groups of 12 samples each, with realistic fragment GC bias, and with
-dispersion on transcript-level counts following the joint distribution
-of mean and dispersion values estimated from the GEUVADIS samples. 
+dispersion on transcript-level counts drawn from the joint distribution
+of mean and dispersion values estimated from the GEUVADIS samples.
+To compare *DRIMSeq* and *DEXSeq* in further detail, we generated
+an additional simulation in which dispersion parameters were assigned
+to genes via matching on the gene-level count, and then all
+transcripts of a gene had counts generated using the same per-gene dispersion.
 The first sample for group 1 and the first sample for group 2 followed the
-realistic GC bias profile of the same sample, and so on for all 12
+realistic GC bias profile of the same GEUVADIS sample, and so on for all 12
 samples. This pairing of the samples was used to generate balanced
 data, but not used in the statistical analysis. 
 *countsimQC* [@Soneson2017Towards] was used to
@@ -209,8 +213,9 @@ associated GitHub repository for simulation code [@swimdown].
 Differential expression across two groups was generated as follows:
 70% of the genes were set as "null genes", where abundance was not
 changed across the two groups. For 10% of genes, all isoforms were
-differentially expressed at a log fold change between 1 and 2.58. The
-set of transcripts in these genes were classified as DGE (differential
+differentially expressed at a log fold change between 1 and 2.58 (fold
+change between 2 and 6). The set of transcripts in these genes were
+classified as DGE (differential 
 gene expression) by construction, and the expressed genes were also
 DTE (differential transcript expression), but they did not count as
 DTU (differential transcript usage), as the proportions within the
@@ -251,7 +256,7 @@ legend("bottomright",
 ## Operation
 
 This workflow was designed to work with R 3.5 or higher, and the
-*DRIMSeq*, *DEXSeq*, *stageR* and *tximport* packages for Bioconductor
+*DRIMSeq*, *DEXSeq*, *stageR*, and *tximport* packages for Bioconductor
 version 3.7 or higher. Bioconductor packages should always be
 installed following the [official instructions](https://bioconductor.org/install).
 The workflow uses a subset of all genes to speed
@@ -280,14 +285,18 @@ To build the *Salmon* index, we used the following command:
 salmon index -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
 ```
 
-To quantify each sample, we used the following command, which uses 6
-threads, and performs fragment GC bias modeling. The library type is
-specified by `-l IU` and is discussed at this link:
-<http://salmon.readthedocs.io/en/latest/library_type.html>. Recent 
-versions of Salmon can automatically detect the library type by
+To quantify each sample, we used the following command, which says to
+quantify with six threads using the GENCODE index, with inward and
+unstranded paired end reads, using fragment GC bias correction,
+writing out to the directory `sample` and using as input these two
+reads files. The library type is specified by `-l IU` (inward and
+unstranded) and the options are discussed in the 
+[Salmon documentation](http://salmon.readthedocs.io/en/latest/library_type.html). 
+Recent versions of Salmon can automatically detect the library type by
 setting `-l A`. Such a command can be automated in a bash loop using
 bash variables, or one can use more advanced workflow management
-systems such as Snakemake [@Koster2012Snakemake] or Nextflow [@Di2017Nextflow].
+systems such as Snakemake [@Koster2012Snakemake] or Nextflow
+[@Di2017Nextflow]. 
 
 ```
 salmon quant -p 6 -i gencode.v28_salmon-0.10.0 -l IU \
@@ -317,14 +326,14 @@ head(files)
 ```
 
 We can then import transcript-level counts using *tximport*.
-We suggest to generate counts from abundance, using the
+We suggest for DTU analysis to generate counts from abundance, using the
 `scaledTPM` method described by @Soneson2015Differential. 
 The `countsFromAbundance` option of *tximport* uses estimated
 abundances to generate roughly count-scaled data, such that each
 column will sum to the number of reads mapped for that library. 
 We recommend `scaledTPM` for differential transcript usage
 so that the estimated proportions fit by *DRIMSeq* in
-following sections correspond to the proportions of underlying
+the following sections correspond to the proportions of underlying
 abundance. 
 
 If instead of `scaledTPM`, we used the original estimated transcript counts
@@ -338,7 +347,7 @@ length, while `scaledTPM` transcript counts do not. For testing DTU
 using *DRIMSeq* and *DEXSeq*, it is convenient if the count-scale data
 do *not* scale with transcript length within a gene.
 Note that this could be corrected by an offset, but this is not
-easily implemented in the current packages. While this workflow only
+easily implemented in the current DTU analysis packages. While this workflow only
 considers existing software features, we are considering developing a new
 `countsFromAbundance` method which would scale abundance for all
 transcripts of a gene by a fixed gene length, then each sample by its
@@ -361,14 +370,15 @@ cts <- cts[rowSums(cts) > 0,]
 ## Transcript-to-gene mapping
 
 Bioconductor offers numerous approaches for building a *TxDb* object,
-a transcript database that can be used to link transcripts to genes.
-We used the following unevaluated code chunks to generate a *TxDb*,
+a transcript database that can be used to link transcripts to genes
+(among other uses).
+We ran the following unevaluated code chunks to generate a *TxDb*,
 and then used the `select` function with the *TxDb* to produce 
 a corresponding *data.frame* called `txdf` which links transcript IDs
-to gene IDs (in this *TxDb* the transcript IDs are called `TXNAME` and
-the gene IDs are called `GENEID`). The version 28 human GTF file was
-downloaded from the GENCODE website when we downloaded the transcripts
-FASTA file. 
+to gene IDs. In this *TxDb*, the transcript IDs are called `TXNAME` and
+the gene IDs are called `GENEID`. The version 28 human GTF file was
+downloaded from the GENCODE website when downloading the transcripts
+FASTA file.
 
 ```{r eval=FALSE}
 library(GenomicFeatures)
@@ -378,7 +388,8 @@ txdb <- makeTxDbFromGFF(gtf)
 saveDb(txdb, txdb.filename)
 ```
 
-Once the *TxDb* database has been saved, it can be quickly reloaded:
+Once the *TxDb* database has been generated and saved, it can be
+quickly reloaded: 
 
 ```{r eval=FALSE}
 txdb <- loadDb(txdb.filename)
@@ -391,7 +402,7 @@ txdf$ntx <- tab[match(txdf$GENEID, names(tab))]
 
 ## DRIMSeq
 
-We load the `cts` object as created in the code chunk above. This
+We load the `cts` object as created in the *tximport* code chunks. This
 contains count-scale data, generated from abundance using the
 `scaledTPM` method. The column sums are equal to the number of mapped 
 paired-end reads per experiment. The experiments have between 31 and
@@ -428,7 +439,7 @@ counts <- data.frame(gene_id=txdf$GENEID,
                      cts)
 ```
 
-We can now load the DRIMSeq package and create a *dmDSdata* object,
+We can now load the *DRIMSeq* package and create a *dmDSdata* object,
 with our `counts` and `samps` *data.frames*. Typing in the object name
 and pressing return will give information about the number of genes:
 
@@ -449,7 +460,7 @@ counts(d[1,])[,1:4]
 
 It will be useful to first filter the object, before running
 procedures to estimate model parameters. This greatly speeds up the
-fitting and removes transcripts which would be troublesome for
+fitting and removes transcripts which may be troublesome for
 parameter estimation, e.g. estimating the proportion of expression
 among the transcripts of a gene when the total count is very low. We first
 define `n` to be the total number of samples, and `n.small` to be the
@@ -466,13 +477,16 @@ It is important to consider what types of transcripts may be removed
 by the filters, and potentially adjust depending on the dataset.  If
 `n` was large, it would make sense to allow perhaps a few samples to
 have very low counts, so lowering `min_samps_gene_expr` to some
-multiple $< 1$ of `n`, and likewise for the first two filters for
+factor multiple ($< 1$) of `n`, and likewise for the first two filters for
 `n.small`. The second filter means that if a transcript does not make
 up more than 10% of the gene's expression for at least `n.small`
-samples, it will be removed. If this proportion seems to high, for
+samples, it will be removed. If this proportion seems too high, for
 example, if very lowly expressed isoforms are of particular interest,
-then the filter can be omitted or the `min_feature_prop`
-lowered. After filtering, this dataset has 7,764 genes.
+then the filter can be omitted or the `min_feature_prop` lowered. For
+a concrete example, if a transcript goes from a proportion of 0% in the
+control group to a proportion of 9% in the treatment group, this would
+be removed by the above 10% filter. After filtering, this dataset has
+7,764 genes.
 
 ```{r}
 n <- 12
@@ -505,8 +519,8 @@ design_full <- model.matrix(~condition, data=DRIMSeq::samples(d))
 colnames(design_full)
 ```
 
-Only for speeding up the code evaluations in this workflow, we subset
-to the first 250 genes, representing about one thirtieth of the
+Only for speeding up running the live code chunks in this workflow, we
+subset to the first 250 genes, representing about one thirtieth of the
 dataset. This step would not be run in a typical workflow.
 
 ```{r}
@@ -520,8 +534,8 @@ dispersion in the Dirichlet Multinomial model via the formula below. Because
 precision is in the denominator of the right hand side of the
 equation, they are inversely related. Higher *dispersion* -- counts more
 variable around their expected value -- is associated with lower
-*precision*. For full details about the DRIMSeq model, one should read
-both the DRIMSeq software vignette and the DRIMSeq publication
+*precision*. For full details about the *DRIMSeq* model, one should read
+both the detailed software vignette and the publication
 [@Nowicka2016DRIMSeq]. After estimating the precision, we fit regression coefficients
 and perform null hypothesis testing on the coefficient of
 interest. Because we have a simple two-group model, we test the
@@ -543,7 +557,7 @@ system.time({
 
 To build a results table, we run the `results` function. We can
 generate a single p-value per gene, which tests whether there is any
-differential transcript usage, or a single p-value per transcript,
+differential transcript usage within the gene, or a single p-value per transcript,
 which tests whether the proportions for this transcript changed within
 the gene:
 
@@ -590,7 +604,7 @@ asking first: "which genes contain any evidence of DTU?", and secondly
 "which transcripts in the genes that contain some evidence may be
 participating in the DTU?". Note that a gene may pass the first
 stage without exhibiting enough evidence to identify one or more
-transcripts that are participating. The *stageR* package is designed
+transcripts that are participating in the DTU. The *stageR* package is designed
 to allow for such two-stage testing procedures, where the first stage
 is called a *screening* stage and the second stage a *confirmation*
 stage [@Van2017StageR]. The methods are general, and can also be applied to
@@ -626,7 +640,7 @@ tx2gene <- res.txp[,c("feature_id", "gene_id")]
 for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
 ```
 
-The following functions then perform the analysis. We must specify an
+The following functions then perform the *stageR* analysis. We must specify an
 `alpha` which will be the *overall false discovery rate* target for the
 analysis, defined below. Unlike typical adjusted p-values or
 q-values, we cannot choose an arbitrary threshold later: after
@@ -647,9 +661,9 @@ head(drim.padj)
 ```
 
 The final table with adjusted p-values summarizes the information from
-the two stage analysis. Only genes which passed the filter are
+the two-stage analysis. Only genes which passed the filter are
 included in the table, so the table already represents *screened* genes. 
-The transcripts with `transcript` less than 0.05 pass the
+The transcripts with values in the column, `transcript`, less than 0.05 pass the
 *confirmation* stage on a target 5% *overall false
 discovery rate*, or OFDR. This means that, in expectation, no more
 than 5% of the genes that pass screening will either (1) not contain
@@ -660,14 +674,14 @@ procedure allows us to look at both the genes that passed the
 screening stage and the transcripts with adjusted p-values less than 
 our target `alpha`, and understand what kind of *overall* error rate
 this procedure entails. This cannot be said for an arbitrary procedure
-of looking at simple gene adjusted p-values and transcript adjusted
+of looking at standard gene adjusted p-values and transcript adjusted
 p-values, where the adjustment was performed independently.
 
 ## Post-hoc filtering on the standard deviation in proportions
 
 We found that *DRIMSeq* was sensitive to detect DTU, but could exceed
-its FDR bounds, particularly on the transcript-level tests, and 
-that a post-hoc, non-specific filtering of the *DRIMSeq* results table
+its false discovery rate (FDR) bounds, particularly on the transcript-level tests, and 
+that a post-hoc, non-specific filtering of the *DRIMSeq* transcript p-values
 improved the FDR control. We considered the standard deviation (SD) of the
 per-sample proportions as a filtering statistic. This statistic does
 not use the information about which samples belong to which condition
@@ -702,8 +716,8 @@ analysis before the modeling begins.
 
 The *DEXSeq* package was originally designed for detecting
 differential exon usage [@Anders2012DEXSeq], but can also be adapted
-to run on estimated transcript counts, in order to detect DTU. The
-usage of *DEXSeq* on transcript counts was evaluated by
+to run on estimated transcript counts, in order to detect DTU. 
+Using *DEXSeq* on transcript counts was evaluated by
 @Soneson2016Isoform, showing the benefits in FDR control from
 filtering lowly expressed transcripts for a transcript-level analysis.
 We benchmarked *DEXSeq* here, beginning with the *DRIMSeq*
@@ -711,23 +725,23 @@ filtered object, as these filters are intuitive, they greatly speed up
 the analysis, and such filtering was shown to be beneficial in FDR
 control. 
 
-The two factors of working on isoform counts rather than
-individual exons and using the *DRIMSeq* filtering options
+The two factors of (1) working on isoform counts rather than
+individual exons and (2) using the *DRIMSeq* filtering procedure
 dramatically increase the speed of *DEXSeq*, compared to running an
-exon-level analysis. Another advantage is that we can benefit from
-the sophisticated bias models of *Salmon*, which account for dips in
+exon-level analysis. Another advantage is that we benefit from
+the sophisticated bias models of *Salmon*, which account for drops in
 coverage on alternative exons that can otherwise throw off estimates
-of transcript abundance. A disadvantage over the exon-level analysis
+of transcript abundance [@Love2016Alpine]. A disadvantage over the exon-level analysis
 is that we must know in advance all of the possible isoforms that can
 be generated from a gene locus, all of which are assumed to be
-contained in the annotation files.
+contained in the annotation files (FASTA and GTF).
 
-We first load the DEXSeq package and then build a *DEXSeqDataSet* from
+We first load the *DEXSeq* package and then build a *DEXSeqDataSet* from
 the data contained in the *dmDStest* object (the class of the
 *DRIMSeq* object changes as the results are added). The design formula
 of the *DEXSeqDataSet* here uses the language "exon" but this should
 be read as "transcript" for our analysis. *DEXSeq* will test, after
-accounting for total gene expression for this gene and for the
+accounting for total gene expression for this sample and for the
 proportion of this transcript relative to the others, whether there is
 a condition-specific difference in the transcript proportion relative
 to the others. The testing of "this" vs "others" in *DEXSeq* enables
@@ -775,7 +789,8 @@ qval <- perGeneQValue(dxr)
 dxr.g <- data.frame(gene=names(qval),qval)
 ```
 
-For size consideration, we reduce also the transcript-level results table to a simple *data.frame*:
+For size consideration of the workflow R package, we reduce also the
+transcript-level results table to a simple *data.frame*: 
 
 ```{r}
 columns <- c("featureID","groupID","pvalue")
@@ -794,7 +809,7 @@ load("dex_tables.rda")
 
 If the *stageR* package has not already been loaded, we make sure to
 load it, and run code very similar to that used above for *DRIMSeq*
-two stage testing, with a target `alpha=0.05`.
+two-stage testing, with a target `alpha=0.05`.
 
 ```{r}
 library(stageR)
@@ -809,7 +824,7 @@ for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
 
 The following three functions provide a table with the OFDR control
 described above. To repeat, the set of genes passing screening should
-not have more than 5% of either genes which have no DTU or genes which
+not have more than 5% of either genes which have in fact no DTU or genes which
 contain a transcript with an adjusted p-value less than 5% which do
 not participate in DTU.
 
@@ -831,12 +846,12 @@ completeness, we also show example commands and evaluate its
 performance on the simulated data [@Trincado2018SUPPA2]. *SUPPA2* offers a number of
 distinct features, including the ability to translate from *Salmon*
 transcript-level quantifications to individual splicing events, which
-are cataloged using a specific vocabulary described in the software
-usage guide: <https://github.com/comprna/SUPPA>. *SUPPA2* additionally
-offers differential analysis on the splicing events, which may be more
-valuable to investigators than per-transcript results, depending on the system
-and research goals (similar to the primary exon-level primary use case of
-*DEXSeq*). 
+are cataloged using a specific vocabulary described in the 
+[SUPPA2 software usage guide](https://github.com/comprna/SUPPA). 
+*SUPPA2* additionally offers differential analysis on the splicing
+events, which may be more 
+valuable to investigators than per-transcript results, depending on the
+research goals (similar to the exon-level primary use case of *DEXSeq*). 
 
 Here, as our DTU simulation involved switching between
 expressed transcripts without assessing whether they were separated by
@@ -929,7 +944,7 @@ which can be found in the References section of this workflow.
 
 # Evaluation of methods for DTU
 
-We begin the evaluation by noting that the methods did not call many
+We begin the evaluation by noting that the methods correctly did not call many
 of the DGE genes as DTU. The object `dge.genes` contains the names of
 all the genes in which all the isoforms were differentially expressed
 by an equal amount (so not DTU). *SUPPA2* output is not included in
@@ -950,7 +965,7 @@ dxr.g$dge <- dxr.g$gene %in% dge.genes
 with(dxr.g, table(sig=qval < .05, dge))
 ```
 
-```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
+```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
 knitr::include_graphics("figs/dtu_gene.jpg")
 ```
 
@@ -958,20 +973,19 @@ The *iCOBRA* package [@Soneson2016iCOBRA] was used to construct plots to assess 
 positive rate over the false discovery rate at three nominal FDR
 thresholds: 1%, 5%, and 10%.  The code for evaluating all
 methods and constructing the *iCOBRA* plots is included in the
-repository at the following
-link: <https://github.com/mikelove/swimdown>.
+simulation repository [@swimdown].
 Above, we showed an analysis for a comparison of 6 vs 6 samples.
 As we were interested in the performance at various sample sizes, we
 performed the entire analysis for *DRIMSeq*, *DEXSeq*, and *SUPPA2* at
-per-group sample sizes of 3,6,9, and 12. 
+per-group sample sizes of 3, 6, 9, and 12. 
 
 At the gene level, in terms of controlling 
 the nominal FDR, *SUPPA2* always controlled its FDR, even for the
 smallest sample size, *DEXSeq* controlled except for the 1% threshold
-in the smallest case, and *DRIMSeq* exceeded its FDR but approached
+in the smallest sample size case, and *DRIMSeq* exceeded its FDR but approached
 the target for larger sample sizes (Figure
-\@ref(fig:dtu-gene)). Exceeding the nominal level by a small amount
-should be taken with sensitivity in consideration as well.
+\@ref(fig:dtu-gene)). Exceeding the nominal FDR level by a small amount
+should be considered with a method's sensitivity in mind as well.
 For example, for the 6 vs 6 comparison, *DRIMSeq* had observed FDR of 12%
 at nominal 10%, meaning that for every 100 genes reported as
 containing DTU, the method reported 2 extra genes more than its
@@ -983,10 +997,10 @@ implemented with *stageR* using gene- and transcript-level p-values
 from *DRIMSeq* and *DEXSeq*. For *DRIMSeq*, we assessed whether
 raising the p-values for transcripts with small proportion SD
 helped to recover OFDR control. *DEXSeq* input to *stageR*
-tended to stay within the OFDR bound, and the observed OFDR for *DRIMSeq* with
-proportion SD filtering lowered to less than 10% as the sample
-size increased (Figure \@ref(fig:dtu-ofdr)). Without the filtering,
-the observed OFDR for *DRIMSeq* was otherwise around 20-25%.
+tended to stay within the 5% OFDR target, and the observed OFDR for *DRIMSeq* with
+proportion SD filtering lowered to around 15% at per-group sample size of 6 and higher
+(Figure \@ref(fig:dtu-ofdr)). Without the filtering,
+the observed OFDR for *DRIMSeq* was otherwise around 25%.
 
 ```{r dtu-ofdr, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
 knitr::include_graphics("figs/ofdr.pdf")
@@ -1006,7 +1020,7 @@ proportion SD filtering approached the target FDR as sample
 size increased for the 5% and 10% targets, while without filtering,
 the observed FDR was always higher than the target.
 
-```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering) and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
+```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering), and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp.jpg")
 ```
 
@@ -1028,10 +1042,10 @@ counts with *tximport* and filtering takes only a few seconds).
 
 In order to further investigate performance differences between
 *DRIMSeq* and *DEXSeq*, we generated an additional simulation in which
-genes were assigned dispersion parameters by matching the gene-level
+genes were assigned Negative Binomial dispersion parameters by matching the gene-level
 count to the joint distribution of mean and dispersions on the
 GEUVADIS dataset. Then transcript-level counts were generated with all
-transcripts of a gene being assigned the same dispersion parameter. This
+transcripts of a gene being assigned the same Negative Binomial dispersion parameter. This
 contrasts with the main simulation, in which each transcript was
 assigned its own dispersion parameter, resulting in heterogeneity of
 dispersion within a gene. As we do not know the degree to which
@@ -1055,7 +1069,7 @@ of *DRIMSeq* and *DEXSeq* by noting that we do not know whether
 various real RNA-seq experiments will more closely reflect within-gene
 heterogeneous dispersion or fixed dispersion, or something in between.
 
-```{r dtu-gene-pgd, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
+```{r dtu-gene-pgd, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_gene_pergene_disp.jpg")
 ```
 
@@ -1063,7 +1077,7 @@ knitr::include_graphics("figs/dtu_gene_pergene_disp.jpg")
 knitr::include_graphics("figs/ofdr_pergene_disp.pdf")
 ```
 
-```{r dtu-txp-pgd, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, (D) 12. Circles indicate thresholds of 1\\%, 5\\% and 10\\% nominal FDR."}
+```{r dtu-txp-pgd, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp_pergene_disp.jpg")
 ```
 
@@ -1082,7 +1096,7 @@ simulated the genes according to three different categories, we can
 color the final plot by the true simulated state of the genes. We note
 that we will pair *DEXSeq* with *DESeq2* results in the following
 plot, and *DRIMSeq* with *edgeR* results. However, this pairing is
-somewhat arbitrary, and any DTU method can reasonably be paired with
+arbitrary, and any DTU method can reasonably be paired with
 any DGE method.
 
 The following line of code is unevaluated, but was used to generate an
@@ -1111,8 +1125,8 @@ dds <- DESeq(dds)
 dres <- DESeq2::results(dds)
 ```
 
-We can confirm that most of the DTU genes are not included in the
-significant results (although some are).
+We can confirm that most of the DTU genes are correctly not included in the
+significant DGE results (although some are).
 
 ```{r}
 length(dtu.genes)
@@ -1121,7 +1135,7 @@ table(rownames(dres)[which(dres$padj < .05)] %in% dtu.genes)
 
 Because we happen to know the true status of each of the genes, we can
 make a scatterplot of the results, coloring the genes by their status
-(whether DGE, DTE, or DTU). 
+(whether DGE, DTE, or DTU by construction). 
 
 ```{r}
 all(dxr.g$gene %in% rownames(dres))
@@ -1147,6 +1161,7 @@ should only be used for visualization.
 
 ```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene, and plotted are -log10 adjusted p-values for DEXSeq's test of differntial transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
 bigpar()
+# here cap the smallest DESeq2 adj p-value
 cap.padj <- pmin(-log10(dres$padj), 100)
 # this vector only used for plotting
 jitter.padj <- -log10(dxr.g$qval + 1e-20)
@@ -1179,7 +1194,7 @@ y <- y[keep,]
 ```
 
 The basic *edgeR* model fitting and results extraction can be
-accomplished with the following lines. 
+accomplished with the following lines: 
 
 ```{r}
 y <- estimateDisp(y, design_full)
@@ -1188,7 +1203,7 @@ lrt <- glmLRT(fit)
 tt <- topTags(lrt, n=nrow(y), sort="none")[[1]]
 ```
 
-We confirm that most of the DTU genes were not reported as DGE:
+We confirm that most of the DTU genes are correctly not reported as DGE:
 
 ```{r}
 table(rownames(tt)[which(tt$FDR < .05)] %in% dtu.genes)
@@ -1211,9 +1226,9 @@ Figure \@ref(fig:tuge-drim-edger) displays the evidence for
 differential transcript usage over that for differential gene
 expression, now using *DRIMSeq* and *edgeR*. One obvious contrast with
 Figure \@ref(fig:tuge-plot) is that *DRIMSeq* outputs lower non-zero
-adjusted p-values than *DEXSeq* does, where *DEXSeq* instead output 0
-for many genes. The plots look more similar when zooming in to the
-*DRIMSeq* axis, as can be seen in Figure \@ref(fig:tuge-drim-zoom).
+adjusted p-values than *DEXSeq* does, where *DEXSeq* instead outputs 0
+for many genes. The plots look more similar when zooming in on the
+*DRIMSeq* y-axis, as can be seen in Figure \@ref(fig:tuge-drim-zoom).
 
 ```{r tuge-drim-edger, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot, as previously, but for DRIMSeq and edgeR."}
 bigpar()
@@ -1243,7 +1258,7 @@ discovery rate on the simulated dataset. In this analysis, the
 simulated "DTE" genes (where a single transcript was chosen to be
 differentially expressed) should count for differential gene
 expression, while the simulated "DTU" genes should not, as the
-expression remains constant. 
+total expression of the gene remains constant. 
 
 We compared 
 *DESeq2* [@Love2014Moderated], 
@@ -1264,8 +1279,7 @@ counts and an offset from *tximport*, we used this approach. *edgeR*
 and *edgeR-QL* had the same performance using the counts and offset
 approach or the `lengthScaledTPM` approach, so we used the latter for
 code simplicity.  The exact code used to run the different methods can
-be found at the following
-link: <https://github.com/mikelove/swimdown>. Timings for the
+be found at the simulation code repository [@swimdown]. Timings for the
 different gene-level methods are presented in Table
 \@ref(tab:timing-dge).
 
@@ -1291,7 +1305,7 @@ for *sleuth* (Supplementary Figure 3).
 
 : (\#tab:timing-dge) Timing of methods for DGE rounded to the
   minute by per-group sample size. Timing includes data import and
-  summarization to gene-level quantities.
+  summarization to gene-level quantities using one core.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
 | ---------- | --- | --- | --- | --- | 
@@ -1316,7 +1330,7 @@ described in the earlier sections of the workflow represent an easily
 interpretable approach, some investigators may prefer to assess
 differential expression on a per-transcript basis. For this
 assessment, all of the simulated non-null transcripts count as DTE,
-whether from the simulated "DGE", "DTE", or "DTU" genes. For most of
+whether from the simulated DGE-, DTE-, or DTU-by-construction genes. For most of
 the methods, we simply provided the transcript-level data to the same
 functions as for the DGE analysis. *EBSeq* was provided with the
 number of isoforms per gene. The timing of the methods is presented in
@@ -1356,11 +1370,11 @@ knitr::include_graphics("figs/dte.jpg")
 
 Here we presented a workflow for analyzing RNA-seq experiments for
 differential transcript usage across groups of samples. The
-Bioconductor packages used, *DRIMSeq*, *DEXSeq*, and *stageR* are
+Bioconductor packages used, *DRIMSeq*, *DEXSeq*, and *stageR*, are
 simple to use and fast when run on transcript-level data. We show how
 these can be used downstream of transcript abundance quantification
 with *Salmon*. We evaluated these methods on a simulated dataset and
-showed how the transcript usage results can complement a gene-level
+showed how the transcript usage results complement a gene-level
 analysis, which can also be run on output from *Salmon*, using the
 *tximport* package to aggregate quantification to the gene level. We
 used the simulated dataset to evaluate Bioconductor and other R
@@ -1373,7 +1387,7 @@ discovery rate, assuming that the underlying tests are well
 calibrated.
 
 One potential limitation of this workflow is that, in contrast to
-other methods such as the standard *DEXSeq* analysis, *SUPPA2* or
+other methods such as the standard *DEXSeq* analysis, *SUPPA2*, or
 *LeafCutter* [@Li2018Leaf], 
 here we considered and detected expression switching between annotated
 transcripts. Other methods such as *DEXSeq* (exon-based),

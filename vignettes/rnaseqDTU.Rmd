@@ -57,8 +57,7 @@ opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE,
 
 **Bioconductor version**: `r BiocInstaller::biocVersion()`
 
-<!-- fix this to rnaseqDTU later -->
-**Package**: `r packageVersion("DRIMSeq")`
+**Package**: `r packageVersion("rnaseqDTU")`
 
 # Introduction
 

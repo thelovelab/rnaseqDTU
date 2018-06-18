@@ -10,7 +10,8 @@ author:
   - Institute of Molecular Life Sciences, University of Zurich, Zurich, Switzerland
   - SIB Swiss Institute of Bioinformatics, Zurich, Switzerland
 - name: Rob Patro
-  affiliation: Department of Computer Science, Stony Brook University
+  affiliation: Department of Computer Science, Stony Brook University,
+  Stony Brook, NY, US
 date: 5 June, 2018
 vignette: >
   %\VignetteIndexEntry{RNA-seq workflow for differential transcript usage following Salmon quantification}

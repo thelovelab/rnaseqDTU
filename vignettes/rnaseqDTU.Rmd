@@ -152,7 +152,7 @@ following quantification of transcript abundance using the *Salmon*
 method. This workflow includes live, runnable code chunks for analysis
 using *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
 testing of differential transcript usage using the *stageR*
-package. For the workflow, we use data which is simulated, so that 
+package. For the workflow, we use data that is simulated, so that 
 we can also evaluate the performance of methods for differential
 transcript usage, as well as differential gene and transcript
 expression. The simulation was constructed using distributional
@@ -174,11 +174,12 @@ All of the code used to simulate RNA-seq experiments and write
 paired-end reads to FASTQ files can be found at an associated GitHub repository for
 the simulation code [@swimdown], and the reads and quantification
 files can be downloaded from Zenodo [@swimdowndata].
-*Salmon* [@Patro2017Salmon] was used to estimate transcript-level abundances for a single
+*Salmon* [@Patro2017Salmon] was used to estimate transcript-level
+abundances for a single 
 sample (ERR188297) of the GEUVADIS project
 [@Lappalainen2013Transcriptome], and this was used as
 a baseline for transcript abundances in the simulation. Transcripts
-which were associated with estimated counts less than 10 had abundance
+that were associated with estimated counts less than 10 had abundance
 thresholded to 0, all other transcripts were considered "expressed".
 *alpine* [@Love2016Alpine] was used to estimate realistic fragment GC
 bias from 12 samples from the GEUVADIS 
@@ -227,7 +228,7 @@ a single expressed isoform was differentially expressed at a log fold
 change between 1 and 2.58. This set of transcripts was DTE by
 construction. If the chosen transcript was the only expressed isoform
 of a gene, this counted also as DGE and not as DTU, but if there were
-other isoforms which are expressed, such genes counted for both DGE
+other isoforms that were expressed, such genes counted for both DGE
 and DTU, as the proportion of expression among the isoforms was
 affected. For 10% of genes, differential transcript
 usage was constructed by exchanging the TPM abundance of two expressed
@@ -237,7 +238,7 @@ genes counted for DTU and DTE, but not for DGE. An MA plot of the
 simulated abundances for the two groups is shown in Figure
 \@ref(fig:ma-simulated).
 
-```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of DGE, DTE, and DTU, here the transcripts are colored by which genes they belong to (thoses selected to be DGE-, DTE-, or DTU-by-construction)."}
+```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of DGE, DTE, and DTU, here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
 library(rnaseqDTU)
 library(rafalib)
 data(simulate)
@@ -276,7 +277,7 @@ will use the first six samples from each group. We quantified against
 the [GENCODE](https://www.gencodegenes.org/releases/current.html)
 human annotation version 28, which was the same reference used to
 generate the simulated reads. We used the transcript sequences FASTA
-file which contains "Nucleotide sequences of all transcripts on the
+file that contains "Nucleotide sequences of all transcripts on the
 reference chromosomes". When downloading the FASTA file, it is useful
 to download the corresponding GTF file, as this will be used in later
 sections. 
@@ -373,7 +374,7 @@ number of mapped reads, therefore balancing between the benefits of
 
 The following code chunk is not evaluated, but instead we will load a
 pre-constructed matrix of counts. The actual quantification files for
-this dataset have been made publicly available, see the *Data
+this dataset have been made publicly available; see the *Data
 availability* section at the end of this workflow.
 
 ```{r eval=FALSE}
@@ -477,7 +478,7 @@ counts(d[1,])[,1:4]
 
 It will be useful to first filter the object, before running
 procedures to estimate model parameters. This greatly speeds up the
-fitting and removes transcripts which may be troublesome for
+fitting and removes transcripts that may be troublesome for
 parameter estimation, e.g. estimating the proportion of expression
 among the transcripts of a gene when the total count is very low. We first
 define `n` to be the total number of samples, and `n.small` to be the
@@ -617,16 +618,16 @@ nrow(res.txp)
 ```
 
 A typical analysis of differential transcript usage would involve
-asking first: "which genes contain any evidence of DTU?", and secondly
+asking first: "which genes contain any evidence of DTU?", and secondly,
 "which transcripts in the genes that contain some evidence may be
-participating in the DTU?". Note that a gene may pass the first
+participating in the DTU?" Note that a gene may pass the first
 stage without exhibiting enough evidence to identify one or more
 transcripts that are participating in the DTU. The *stageR* package is designed
 to allow for such two-stage testing procedures, where the first stage
 is called a *screening* stage and the second stage a *confirmation*
 stage [@Van2017StageR]. The methods are general, and can also be applied to
 testing, for example, changes across a time series followed by
-investigation of individual timepoints, as shown in the *stageR*
+investigation of individual time points, as shown in the *stageR*
 package vignette. We show below how *stageR* is used to detect DTU and
 how to interpret its output.
 
@@ -658,12 +659,12 @@ for (i in 1:2) tx2gene[,i] <- strp(tx2gene[,i])
 ```
 
 The following functions then perform the *stageR* analysis. We must specify an
-`alpha` which will be the *overall false discovery rate* target for the
+`alpha`, which will be the *overall false discovery rate* target for the
 analysis, defined below. Unlike typical adjusted p-values or
 q-values, we cannot choose an arbitrary threshold later: after
 specifying `alpha=0.05`, we need to use 5% as the target in downstream
 steps. There are also convenience functions *getSignificantGenes* and
-*getSignificantTx* which are shown in the *stageR* vignette.
+*getSignificantTx*, which are demonstrated in the *stageR* vignette.
 
 ```{r message=FALSE}
 library(stageR)
@@ -678,7 +679,7 @@ head(drim.padj)
 ```
 
 The final table with adjusted p-values summarizes the information from
-the two-stage analysis. Only genes which passed the filter are
+the two-stage analysis. Only genes that passed the filter are
 included in the table, so the table already represents *screened* genes. 
 The transcripts with values in the column, `transcript`, less than 0.05 pass the
 *confirmation* stage on a target 5% *overall false
@@ -757,9 +758,9 @@ We first load the *DEXSeq* package and then build a *DEXSeqDataSet* from
 the data contained in the *dmDStest* object (the class of the
 *DRIMSeq* object changes as the results are added). The design formula
 of the *DEXSeqDataSet* here uses the language "exon" but this should
-be read as "transcript" for our analysis. *DEXSeq* will test, after
+be read as "transcript" for our analysis. *DEXSeq* will test -- after
 accounting for total gene expression for this sample and for the
-proportion of this transcript relative to the others, whether there is
+proportion of this transcript relative to the others -- whether there is
 a condition-specific difference in the transcript proportion relative
 to the others. The testing of "this" vs "others" in *DEXSeq* enables
 it to be much faster than its original published version, which
@@ -859,7 +860,7 @@ head(dex.padj)
 ## SUPPA2
 
 *SUPPA2* is a command-line software package written in Python
-which also takes as input *Salmon* quantification, and so, for
+that also takes as input *Salmon* quantification, and so, for
 completeness, we also show example commands and evaluate its
 performance on the simulated data [@Trincado2018SUPPA2]. *SUPPA2* offers a number of
 distinct features, including the ability to translate from *Salmon*
@@ -1347,7 +1348,7 @@ knitr::include_graphics("figs/dge.jpg")
 Finally, we assessed the Bioconductor and R packages for differential
 transcript expression analysis. While we believe the separation of
 differential transcript usage and differential gene expression
-described in the earlier sections of the workflow represent an easily
+described in the earlier sections of the workflow represents an easily
 interpretable approach, some investigators may prefer to assess
 differential expression on a per-transcript basis. For this
 assessment, all of the simulated non-null transcripts count as DTE,
@@ -1445,7 +1446,8 @@ The statistical methods were evaluated using the following software versions:
 *sleuth* - 0.29.0,
 *SUPPA2* - 2.3.
 The samples were quantified with *Salmon* version 0.10.0 and
-*kallisto* version 0.44.0.
+*kallisto* version 0.44.0. *polyester* version 1.16.0 and *alpine*
+version 1.6.0 were used in generating the simulated dataset.
 
 # Data availability 
 

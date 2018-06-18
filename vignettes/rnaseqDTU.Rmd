@@ -1451,7 +1451,7 @@ version 1.6.0 were used in generating the simulated dataset.
 # Data availability 
 
 The simulated paired-end read FASTQ files have been uploaded in
-three batches of four samples each to Zenodo, and the quantification
+three batches of eight samples each to Zenodo, and the quantification
 files are also available as a separate Zenodo dataset
 [@swimdowndata]. The scripts used to generate the simulated dataset
 are available at the simulation GitHub repository [@swimdown]

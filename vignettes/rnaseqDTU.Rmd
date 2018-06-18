@@ -962,7 +962,7 @@ which can be found in the References section of this workflow.
 # Evaluation of methods for DTU
 
 We begin the evaluation by noting that all of the methods correctly avoided
-calling many of the DGE event as DTU events. The object `dge.genes` contains the names
+calling many of the DGE events as DTU events. The object `dge.genes` contains the names
 of all the genes in which all the isoforms were differentially expressed by an
 equal amount (so not DTU). *SUPPA2* output is not included in the workflow, but
 it only reported one of the DGE genes as DTU out of 851 with an adjusted p-value

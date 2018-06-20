@@ -10,8 +10,7 @@ author:
   - Institute of Molecular Life Sciences, University of Zurich, Zurich, Switzerland
   - SIB Swiss Institute of Bioinformatics, Zurich, Switzerland
 - name: Rob Patro
-  affiliation: Department of Computer Science, Stony Brook University,
-  Stony Brook, NY, US
+  affiliation: Department of Computer Science, Stony Brook University, Stony Brook, NY, US
 date: 5 June, 2018
 vignette: >
   %\VignetteIndexEntry{RNA-seq workflow for differential transcript usage following Salmon quantification}
@@ -176,7 +175,7 @@ the simulation code [@swimdown], and the reads and quantification
 files can be downloaded from Zenodo [@swimdowndata].
 *Salmon* [@Patro2017Salmon] was used to estimate transcript-level
 abundances for a single 
-sample (ERR188297) of the GEUVADIS project
+sample ([ERR188297](https://www.ebi.ac.uk/ena/data/view/ERR188297)) of the GEUVADIS project
 [@Lappalainen2013Transcriptome], and this was used as
 a baseline for transcript abundances in the simulation. Transcripts
 that were associated with estimated counts less than 10 had abundance
@@ -238,7 +237,7 @@ This counted for DTU and DTE, but not for DGE. An MA plot of the
 simulated transcript abundances for the two groups is shown in Figure
 \@ref(fig:ma-simulated).
 
-```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of DGE, DTE, and DTU, here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
+```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance in transcripts-per-million (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of differential gene expression (DGE), differential transcript expression (DTE), and differential transcript usage (DTU), here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
 library(rnaseqDTU)
 library(rafalib)
 data(simulate)
@@ -985,7 +984,7 @@ dxr.g$dge <- dxr.g$gene %in% dge.genes
 with(dxr.g, table(sig=qval < .05, dge))
 ```
 
-```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
+```{r dtu-gene, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for differential transcript usage (DTU). True positive rate (y-axis) over false discovery rate (FDR) (x-axis) for DEXSeq, DRIMSeq, and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR, which are filled if the observed value is less than the target (dashed vertical lines)."}
 knitr::include_graphics("figs/dtu_gene.jpg")
 ```
 
@@ -1023,7 +1022,7 @@ proportion SD filtering lowered to around 15% at per-group sample size of 6 and 
 (Figure \@ref(fig:dtu-ofdr)). Without the filtering,
 the observed OFDR for *DRIMSeq* was otherwise around 25%.
 
-```{r dtu-ofdr, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
+```{r dtu-ofdr, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
 knitr::include_graphics("figs/ofdr.pdf")
 ```
 
@@ -1041,7 +1040,7 @@ proportion SD filtering approached the target FDR as sample
 size increased for the 5% and 10% targets, while without filtering,
 the observed FDR was always higher than the target.
 
-```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering), and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
+```{r dtu-txp, out.width="75%", echo=FALSE, fig.cap="Transcript-level differential transcript usage (DTU) analysis without stage-wise testing. True positive rate (y-axis) over false discovery rate (x-axis) for DEXSeq, DRIMSeq (with and without post-hoc filtering), and SUPPA2. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp.jpg")
 ```
 
@@ -1051,7 +1050,8 @@ various sample sizes. Timing includes only the `diffSplice` step of
 *DEXSeq*, we include the timing of the estimation steps (importing
 counts with *tximport* and filtering takes only a few seconds).
 
-: (\#tab:timing-dtu) Timing of methods for DTU in hours:minutes by per-group sample size.
+: (\#tab:timing-dtu) Timing of methods for differential transcript
+  usage (DTU) in hours:minutes by per-group sample size.
 
 | Method | n=3 | n=6 | n=9 | n=12 |
 | --- | --- | --- | --- | --- | 
@@ -1090,15 +1090,15 @@ of *DRIMSeq* and *DEXSeq* by noting that we do not know whether
 various real RNA-seq experiments will more closely reflect within-gene
 heterogeneous dispersion or fixed dispersion, or something in between.
 
-```{r dtu-gene-pgd, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for DTU, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
+```{r dtu-gene-pgd, out.width="75%", echo=FALSE, fig.cap="Gene-level screening for differential transcript usage (DTU), on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_gene_pergene_disp.jpg")
 ```
 
-```{r ofdr-pgd, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed OFDR using stageR for 5\\% target, on the simulation with fixed per-gene dispersions."}
+```{r ofdr-pgd, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target, on the simulation with fixed per-gene dispersions."}
 knitr::include_graphics("figs/ofdr_pergene_disp.pdf")
 ```
 
-```{r dtu-txp-pgd, out.width="75%", echo=FALSE, fig.cap="Transcript-level DTU analysis without stage-wise testing, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
+```{r dtu-txp-pgd, out.width="75%", echo=FALSE, fig.cap="Transcript-level differential transcript usage (DTU) analysis without stage-wise testing, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}
 knitr::include_graphics("figs/dtu_txp_pergene_disp.jpg")
 ```
 
@@ -1180,7 +1180,7 @@ instead to a jittered value around $10^{-20}$, so that their number and
 location on the x-axis could be visualized. These jittered values
 should only be used for visualization.
 
-```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene, and plotted are -log10 adjusted p-values for DEXSeq's test of differntial transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
+```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene, and plotted are -log10 adjusted p-values for DEXSeq's test of differential transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
 bigpar()
 # here cap the smallest DESeq2 adj p-value
 cap.padj <- pmin(-log10(dres$padj), 100)
@@ -1325,7 +1325,8 @@ performance at per-group sample sizes 9 and 12 (Supplementary Figure
 however, did recover control of the FDR at the nominal 5% and 10% FDR
 for *sleuth* (Supplementary Figure 3).
 
-: (\#tab:timing-dge) Timing of methods for DGE rounded to the
+: (\#tab:timing-dge) Timing of methods for differential gene
+  expression (DGE) rounded to the
   minute by per-group sample size. Timing includes data import and
   summarization to gene-level quantities using one core.
 
@@ -1371,7 +1372,8 @@ tended to have higher sensitivity than *edgeR*, *edgeR-QL* and
 transcript-level analysis as in the gene-level analysis, for per-group
 sample size 9 and 12.
 
-: (\#tab:timing-dte) Timing of methods for DTE rounded to the nearest
+: (\#tab:timing-dte) Timing of methods for differential transcript
+  expression (DTE) rounded to the nearest
   minute by per-group sample size. Timing includes data import.
 
 | Method | n=3 | n=6 | n=9 | n=12 |

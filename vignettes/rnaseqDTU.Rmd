@@ -109,7 +109,7 @@ transcript-level quantifiers, such as *Salmon* [@Patro2017Salmon],
 *Sailfish* [@Patro2014Sailfish], and *kallisto* [@Bray2016Near]. The *tximport* package focuses on
 preparing estimated transcript-level counts, abundances
 and effective transcript lengths, for gene-level statistical analysis
-using *edgeR* [@Robinson2009EdgeR], *DESeq2* [@Love2014Moderated] or
+using *edgeR* [@Robinson2009EdgeR], *DESeq2* [@Love2014Moderated], or
 *limma-voom* [@Law2014Voom]. *tximport* produces an 
 offset matrix to accompany gene-level counts, that accounts for
 a number of RNA-seq biases as well as differences in
@@ -186,7 +186,7 @@ project, all from the same sequencing center (the first 12 samples from
 CNAG-CRG in Supplementary Table 2 from @Love2016Alpine). 
 *DESeq2* [@Love2014Moderated] was used to estimate mean and dispersion
 parameters for a Negative 
-Binomial distribution for gene-level counts for 462 GEUVADIS samples
+Binomial distribution for gene-level counts for 458 GEUVADIS samples
 provided by the *recount2* project [@Collado2017Recount].
 Note that, while gene-level dispersion estimates were used
 to generate underlying transcript-level counts, additional uncertainty

@@ -5,7 +5,13 @@ Date: 2018-06-05
 Authors@R: c(person(role=c("aut", "cre"), "Michael", "Love", email = "michaelisaiahlove@gmail.com"),
              person(role=c("aut"), "Charlotte", "Soneson"),
              person(role=c("aut"), "Rob", "Patro"))
-Description: RNA-seq workflow for differential transcript usage following Salmon quantification.
+Description: RNA-seq workflow for differential transcript usage (DTU) following
+             Salmon quantification. This workflow uses Bioconductor packages
+	     tximport, DRIMSeq, and DEXSeq to perform a DTU analysis
+	     on simulated data. It also shows how to use stageR to perform
+	     two-stage testing of DTU, a statistical framework to screen
+	     at the gene level and then confirm which transcripts within
+	     the significant genes show evidence of DTU.
 Depends: R (>= 3.5.0),
          DRIMSeq,
 	 DEXSeq,
@@ -17,3 +23,4 @@ biocViews: Workflow, GeneExpressionWorkflow
 Suggests: knitr, rmarkdown
 NeedsCompilation: no
 URL: https://github.com/mikelove/rnaseqDTU/
+Workflow: TRUE

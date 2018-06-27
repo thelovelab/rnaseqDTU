@@ -1,0 +1,5 @@
+simulate: dge.genes disps dte.genes dtu.genes fold_changes frag_GC_bias iso.dge iso.dte iso.dte.only iso.dtu sim_counts sim.counts.mat tpms txdf
+drim_tables: res res.txp
+dex_tables: dxr dxr.g
+salmon_cts: cts
+salmon_gene_txi: txi.g

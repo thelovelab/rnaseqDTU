@@ -33,7 +33,7 @@ abstract: |
   data.
 keywords: RNA-seq, workflow, differential transcript usage, Salmon, DRIMSeq, DEXSeq, stageR, tximport
 bibliography: bibliography.bib
-output: BiocWorkflowTools::f1000_article
+output: BiocStyle::html_document
 ---
 
 <!-- to compile this: 

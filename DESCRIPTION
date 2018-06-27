@@ -1,7 +1,7 @@
 Package: rnaseqDTU
 Title: RNA-seq workflow for differential transcript usage following Salmon quantification
-Version: 0.1.0
-Date: 2018-06-05
+Version: 0.99.0
+Date: 2018-06-27
 Authors@R: c(person(role=c("aut", "cre"), "Michael", "Love", email = "michaelisaiahlove@gmail.com"),
              person(role=c("aut"), "Charlotte", "Soneson"),
              person(role=c("aut"), "Rob", "Patro"))
@@ -15,7 +15,11 @@ Description: RNA-seq workflow for differential transcript usage (DTU) following
 Depends: R (>= 3.5.0),
          DRIMSeq,
 	 DEXSeq,
-	 stageR
+	 stageR,
+	 DESeq2,
+	 edgeR,
+	 rafalib,
+	 devtools
 License: Artistic-2.0
 LazyData: true
 VignetteBuilder: knitr
@@ -24,3 +28,4 @@ Suggests: knitr, rmarkdown
 NeedsCompilation: no
 URL: https://github.com/mikelove/rnaseqDTU/
 Workflow: TRUE
+RoxygenNote: 6.0.1

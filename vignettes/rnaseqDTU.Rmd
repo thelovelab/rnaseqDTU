@@ -237,7 +237,7 @@ This counted for DTU and DTE, but not for DGE. An MA plot of the
 simulated transcript abundances for the two groups is shown in Figure
 \@ref(fig:ma-simulated).
 
-```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="50%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance in transcripts-per-million (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of differential gene expression (DGE), differential transcript expression (DTE), and differential transcript usage (DTU), here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
+```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="75%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance in transcripts-per-million (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of differential gene expression (DGE), differential transcript expression (DTE), and differential transcript usage (DTU), here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
 library(rnaseqDTU)
 library(rafalib)
 data(simulate)
@@ -1026,7 +1026,7 @@ proportion SD filtering lowered to around 15% at per-group sample size of 6 and 
 (Figure \@ref(fig:dtu-ofdr)). Without the filtering,
 the observed OFDR for *DRIMSeq* was otherwise around 25%.
 
-```{r dtu-ofdr, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
+```{r dtu-ofdr, out.width="75%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
 knitr::include_graphics("figs/ofdr.jpg")
 ```
 
@@ -1098,7 +1098,7 @@ heterogeneous dispersion or fixed dispersion, or something in between.
 knitr::include_graphics("figs/dtu_gene_pergene_disp.jpg")
 ```
 
-```{r ofdr-pgd, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target, on the simulation with fixed per-gene dispersions."}
+```{r ofdr-pgd, out.width="75%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target, on the simulation with fixed per-gene dispersions."}
 knitr::include_graphics("figs/ofdr_pergene_disp.jpg")
 ```
 
@@ -1184,7 +1184,7 @@ instead to a jittered value around $10^{-20}$, so that their number and
 location on the x-axis could be visualized. These jittered values
 should only be used for visualization.
 
-```{r tuge-plot, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene, and plotted are -log10 adjusted p-values for DEXSeq's test of differential transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
+```{r tuge-plot, dev="png", out.width="75%", fig.cap="Transcript usage over gene expression plot. Each point represents a gene, and plotted are -log10 adjusted p-values for DEXSeq's test of differential transcript usage (y-axis) and DESeq2's test of differential gene expression (x-axis). Because we simulated the data we can color the genes according to their true category."}
 bigpar()
 # here cap the smallest DESeq2 adj p-value
 cap.padj <- pmin(-log10(dres$padj), 100)
@@ -1255,7 +1255,7 @@ adjusted p-values than *DEXSeq* does, where *DEXSeq* instead outputs 0
 for many genes. The plots look more similar when zooming in on the
 *DRIMSeq* y-axis, as can be seen in Figure \@ref(fig:tuge-drim-zoom).
 
-```{r tuge-drim-edger, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot, as previously, but for DRIMSeq and edgeR."}
+```{r tuge-drim-edger, dev="png", out.width="75%", fig.cap="Transcript usage over gene expression plot, as previously, but for DRIMSeq and edgeR."}
 bigpar()
 plot(-log10(tt$FDR), -log10(res.sub$adj_pvalue), col=col,
      xlab="Gene expression",
@@ -1265,7 +1265,7 @@ legend("topright",
        col=c(1:3,8), pch=20, bty="n")
 ```
 
-```{r tuge-drim-zoom, dev="png", out.width="50%", fig.cap="Transcript usage over gene expression plot, zooming in on the DRIMSeq adjusted p-values."}
+```{r tuge-drim-zoom, dev="png", out.width="75%", fig.cap="Transcript usage over gene expression plot, zooming in on the DRIMSeq adjusted p-values."}
 bigpar()
 plot(-log10(tt$FDR), -log10(res.sub$adj_pvalue), col=col,
      xlab="Gene expression",

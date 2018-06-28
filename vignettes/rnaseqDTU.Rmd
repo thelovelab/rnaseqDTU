@@ -372,9 +372,13 @@ number of mapped reads, therefore balancing between the benefits of
 `scaledTPM` and `lengthScaledTPM`.
 
 The following code chunk is not evaluated, but instead we will load a
-pre-constructed matrix of counts. The actual quantification files for
-this dataset have been made publicly available; see the *Data
-availability* section at the end of this workflow.
+pre-constructed matrix of counts. In order to comply with Bioconductor 
+workflow data size requirements, we also trimmed the counts matrix to
+two decimal places per count (which is more than enough precision on
+estimated counts). The original analysis was run on the counts
+directly from the *Salmon* quantification files. These quantification
+files for this dataset have been made publicly available; see the
+*Data availability* section at the end of this workflow.
 
 ```{r eval=FALSE}
 library(tximport)
@@ -1023,7 +1027,7 @@ proportion SD filtering lowered to around 15% at per-group sample size of 6 and 
 the observed OFDR for *DRIMSeq* was otherwise around 25%.
 
 ```{r dtu-ofdr, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target. Each method is drawn as a line, and the numbers to the right of the points indicate the per-group sample size. Adjusted p-values for a nominal 5\\% OFDR (dashed vertical line) were generated for DEXSeq and DRIMSeq (with and without post-hoc filtering) from gene- and transcript-level p-values using the stageR framework for stage-wise testing."}
-knitr::include_graphics("figs/ofdr.pdf")
+knitr::include_graphics("figs/ofdr.jpg")
 ```
 
 Finally, we assessed the transcript-level adjusted p-values for DTU
@@ -1095,7 +1099,7 @@ knitr::include_graphics("figs/dtu_gene_pergene_disp.jpg")
 ```
 
 ```{r ofdr-pgd, out.width="50%", echo=FALSE, fig.cap="Number of true positives and observed overall false discovery rate (OFDR) using stageR for 5\\% target, on the simulation with fixed per-gene dispersions."}
-knitr::include_graphics("figs/ofdr_pergene_disp.pdf")
+knitr::include_graphics("figs/ofdr_pergene_disp.jpg")
 ```
 
 ```{r dtu-txp-pgd, out.width="75%", echo=FALSE, fig.cap="Transcript-level differential transcript usage (DTU) analysis without stage-wise testing, on the simulation with fixed per-gene dispersions. The four panels shown are for per-group sample sizes: (A) 3, (B) 6, (C) 9, and (D) 12. Circles indicate thresholds of 1\\%, 5\\%, and 10\\% nominal FDR."}

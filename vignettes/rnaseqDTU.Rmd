@@ -519,7 +519,7 @@ d <- dmFilter(d,
 d
 ```
 
-The *dmDSdata* object only contains genes that have more that one
+The *dmDSdata* object only contains genes that have more than one
 isoform, which makes sense as we are testing for differential
 transcript usage. We can find out how many of the remaining genes have
 $N$ isoforms by tabulating the number of times we see a gene ID, then

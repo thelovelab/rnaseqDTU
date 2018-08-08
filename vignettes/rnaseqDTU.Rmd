@@ -789,7 +789,7 @@ took less than 3 minutes on a laptop.
 system.time({
   dxd <- estimateSizeFactors(dxd)
   dxd <- estimateDispersions(dxd, quiet=TRUE)
-  dxd <- nbinomLRT(dxd, reduced=~sample + exon)
+  dxd <- testForDEU(dxd, reducedModel=~sample + exon)
 })
 ```
 
@@ -966,6 +966,12 @@ published research, please cite the relevant methods publications,
 which can be found in the References section of this workflow.
 
 # Evaluation of methods for DTU
+
+**Note:** in the following evaluations, `nbinomLRT` was incorrectly
+used in the *DEXSeq* workflow instead of the correct `testForDEU`. The
+evaluation plots will therefore need to be replaced with updated
+versions. The `dxr` and `dxr.g` tables have already been updated
+(August 8, 2018).
 
 We begin the evaluation by noting that all of the methods correctly avoided
 calling many of the DGE events as DTU events. The object `dge.genes` contains the names

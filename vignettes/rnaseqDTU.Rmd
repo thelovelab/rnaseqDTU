@@ -316,14 +316,21 @@ salmon quant -p 6 -i gencode.v28_salmon-0.10.0 -l IU \
 We can use *tximport* to import the estimated counts, abundances and
 effective transcript lengths into R. We recommend to construct a CSV file
 that keeps track of the sample identifiers and any relevant variables,
-e.g. condition, time point, batch, and so on. Here we have made a
-sample CSV file and provided it along with this workflow's R package.
+e.g. condition, time point, batch, and so on. 
 
-In order to find this file, we first need to know where on the machine
-this workflow package lives, so we can point to the `extdata`
+Here we have made a sample CSV file and provided it along with this
+workflow's R package, *rnaseqDTU*.  If a user is applying the code in
+this workflow with her own RNA-seq data, she does not need to load the
+*rnaseqDTU* package. If a user is running through the code in this
+workflow with the workflow simulated data, she does need to load the
+*rnaseqDTU* package.
+
+In order to find this CSV file, we first need to know where on the
+machine this workflow package lives, so we can point to the `extdata`
 directory where the CSV file is located. These two lines of code load
-the workflow package and find this directory on the machine. These two
-lines of code would therefore not be part of a *typical* workflow.
+the workflow package and find this directory on the machine. Again,
+these two lines of code would therefore not be part of a *typical*
+analysis using one's own RNA-seq data.
 
 ```{r}
 library(rnaseqDTU)
@@ -352,10 +359,9 @@ We suggest for DTU analysis to generate counts from abundance, using the
 The `countsFromAbundance` option of *tximport* uses estimated
 abundances to generate roughly count-scaled data, such that each
 column will sum to the number of reads mapped for that library. 
-We recommend `scaledTPM` for differential transcript usage
-so that the estimated proportions fit by *DRIMSeq* in
-the following sections correspond to the proportions of underlying
-abundance. 
+By using `scaledTPM` counts, the estimated proportions 
+fit by *DRIMSeq*, which are generated from counts, will be
+equivalent to proportions of the abundance of the isoforms.
 
 If instead of `scaledTPM`, we used the original estimated transcript counts
 (`countsFromAbundance="no"`), or if we used `lengthScaledTPM`
@@ -375,14 +381,17 @@ transcripts of a gene by a fixed gene length, then each sample by its
 number of mapped reads, therefore balancing between the benefits of
 `scaledTPM` and `lengthScaledTPM`.
 
-The following code chunk is not evaluated, but instead we will load a
-pre-constructed matrix of counts. In order to comply with Bioconductor 
-workflow data size requirements, we also trimmed the counts matrix to
-two decimal places per count (which is more than enough precision on
-estimated counts). The original analysis was run on the counts
-directly from the *Salmon* quantification files. These quantification
-files for this dataset have been made publicly available; see the
-*Data availability* section at the end of this workflow.
+The following code chunk is what one would use in a typical analysis,
+but is not evaluated in this workflow because the quantification files
+are not provided in the *rnaseqDTU* package due to size restrictions.
+Instead we will load a pre-constructed matrix of counts below. In a
+typical workflow, the code below would be used to generate the matrix
+of counts from the quantification files. We have also trimmed the counts
+matrix to two decimal places per count (which is more than enough
+precision on estimated counts). All of the quantification files and
+simulated reads for this dataset have been made publicly available on
+*Zenodo*; see the *Data availability* section at the end of this
+workflow.
 
 ```{r eval=FALSE}
 library(tximport)
@@ -397,13 +406,15 @@ cts <- cts[rowSums(cts) > 0,]
 Bioconductor offers numerous approaches for building a *TxDb* object,
 a transcript database that can be used to link transcripts to genes
 (among other uses).
-We ran the following unevaluated code chunks to generate a *TxDb*,
+The following code chunks were used to generate a *TxDb*,
 and then used the `select` function with the *TxDb* to produce 
 a corresponding *data.frame* called `txdf` which links transcript IDs
 to gene IDs. In this *TxDb*, the transcript IDs are called `TXNAME` and
 the gene IDs are called `GENEID`. The version 28 human GTF file was
 downloaded from the GENCODE website when downloading the transcripts
 FASTA file.
+Due to size restrictions, neither the `gencode.v28.annotation.gtf.gz`
+file nor the generated `.sqlite` file are included in the *rnaseqDTU* package.
 
 ```{r eval=FALSE}
 library(GenomicFeatures)

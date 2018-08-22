@@ -288,9 +288,11 @@ sections.
 To build the *Salmon* index, we used the following command. Recent
 versions of *Salmon* will discard identical sequence duplicate
 transcripts, and keep a log of these within the index directory.
+The `--gencode` command trims the *Gencode* FASTA headers to only
+include the transcript identifier.
 
 ```
-salmon index -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
+salmon index --gencode -t gencode.v28.transcripts.fa -i gencode.v28_salmon-0.10.0
 ```
 
 To quantify each sample, we used the following command, which says to

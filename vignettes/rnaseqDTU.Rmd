@@ -316,10 +316,25 @@ salmon quant -p 6 -i gencode.v28_salmon-0.10.0 -l IU \
 ## Importing counts into R/Bioconductor
 
 We can use *tximport* to import the estimated counts, abundances and
-effective transcript lengths into R. We recommend constructing a CSV file
+effective transcript lengths into R. The *tximport* package offers
+three methods for producing count matrices from transcript-level
+quantification files, as described in detail in
+@Soneson2015Differential, and already mentioned in the introduction.
+To recap these are: (1) original estimated counts with effective
+transcript length information used as a statistical offset, (2)
+generating "counts from abundance" by scaling transcript-per-million
+(TPM) abundance estimates per sample such that they sum to the total
+number of mapped reads (*scaledTPM*), or generating "counts from
+abundance" by scaling TPM abundance estimates first by the average
+effective transcript length over samples, and then per sample such
+that they sum to the total number of mapped reads (*lengthScaledTPM*).
+We will use *scaledTPM* for DTU detection, with the statistical
+motivation described below, and the original estimated counts with
+length offset for DGE detection.
+
+We recommend constructing a CSV file
 that keeps track of the sample identifiers and any relevant variables,
 e.g. condition, time point, batch, and so on. 
-
 Here we have made a sample CSV file and provided it along with this
 workflow's R package, *rnaseqDTU*.  If a user is applying the code in
 this workflow with her own RNA-seq data, she does not need to load the

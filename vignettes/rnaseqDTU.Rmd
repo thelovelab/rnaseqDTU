@@ -67,31 +67,39 @@ produced by all isoforms of a gene -- and additionally differences in
 transcript usage within a gene. If the amount of expression
 switches among two or more isoforms of a gene, then the total gene
 expression may not change by a detectable amount, but 
-the differential transcript usage is nevertheless biologically relevant.
+the differential transcript usage (DTU) is nevertheless biologically relevant.
 While many tutorials and workflows in the
 Bioconductor project address differential gene expression, there are
 fewer workflows for performing a differential transcript usage analysis,
 which provides critical and complementary information to a 
-gene-level analysis. Some of the existing Bioconductor packages and functions that 
-can be used to detect differential transcript usage include 
-*BitSeq* [@Glaus2012Identifying], 
+gene-level analysis. Some of the existing Bioconductor packages and
+functions that can be used for statistical analysis of DTU include 
 *DEXSeq* (originally designed for differential exon usage) [@Anders2012Detecting], 
 `diffSpliceDGE` from the *edgeR* package [@Robinson2009EdgeR;@McCarthy2012Differential],
-`diffSplice` from the *limma* package [@Smyth2004Linear;@Law2014Voom],
-*DRIMSeq* [@Nowicka2016DRIMSeq],
-*stageR* [@Van2017StageR], and
-*SGSeq* [@Goldstein2016SGSeq].
-The Bioconductor package *IsoformSwitchAnalyzeR* [@Vitting2017] is
-well documented and can be seen as an alternative to this workflow; 
-*IsoformSwitchAnalyzeR* allows for import of data from various 
+`diffSplice` from the *limma* package [@Smyth2004Linear;@Law2014Voom], and
+*DRIMSeq* [@Nowicka2016DRIMSeq].
+Other Bioconductor packages which are designed around a DTU analysis include 
+*stageR* [@Van2017StageR], *SGSeq* [@Goldstein2016SGSeq], and
+*IsoformSwitchAnalyzeR* [@Vitting2017].
+*stageR* can be used for post-processing of transcript- 
+and gene-level p-values from DTU detection methods, and will be discussed in this workflow.
+*SGSeq* can be used to visualize 
+splice events, and leverages *DEXSeq* or *limma*
+for differential testing of splice variant usage.
+The Bioconductor package *IsoformSwitchAnalyzeR* is
+well documented and the vignette available from the 
+[IsoformSwitchAnalyzeR landing page](https://bioconductor.org/packages/IsoformSwitchAnalyzeR)
+can be seen as an alternative to this workflow.
+*IsoformSwitchAnalyzeR*  is designed for the downstream analysis of 
+functional consequences of identified isoform switches.
+It allows for import of data from various 
 quantification methods, including *Salmon*, and allows for statistical
-inference using *DRIMSeq*, as well as a rank-based statistical test of
-transcript proportions. In addition, *IsoformSwitchAnalyzeR* includes
+inference using *DRIMSeq*. In addition, *IsoformSwitchAnalyzeR* includes
 functions for obtaining the nucleotide and amino acid sequence
-consequences of isoform switching, which is not covered in this
-workflow.
-Other packages related to splicing can be found at the 
-[DifferentialSplicing BiocViews](https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing).
+consequences of isoform switching, which is not covered in this workflow.
+Other packages related to splicing can be found at the *BiocViews* links for
+[DifferentialSplicing](https://bioconductor.org/packages/release/BiocViews.html#___DifferentialSplicing) and
+[AlternativeSplicing](https://bioconductor.org/packages/release/BiocViews.html#___AlternativeSplicing).
 For more information about the Bioconductor project and its core
 infrastructure, please refer to the overview by @Huber2015Orchestrating.
 

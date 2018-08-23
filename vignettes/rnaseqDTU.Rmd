@@ -249,7 +249,7 @@ This counted for DTU and DTE, but not for DGE. An MA plot of the
 simulated transcript abundances for the two groups is shown in Figure
 \@ref(fig:ma-simulated).
 
-```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="75%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance in transcripts-per-million (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the transcripts which are expressed with TPM > 1 in at least one group, 77\\% are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% are differentially expressed (green, orange, or purple). As transcripts can belong to multiple categories of differential gene expression (DGE), differential transcript expression (DTE), and differential transcript usage (DTU), here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
+```{r ma-simulated, message=FALSE, echo=FALSE, dev="png", out.width="75%", fig.cap="MA plot of simulated abundances. Each point depicts a transcript, with the average log2 abundance in transcripts-per-million (TPM) on the x-axis and the difference between the two groups on the y-axis. Of the 35,850 transcripts which are expressed with TPM > 1 in at least one group, 77\\% (n=27,429) are null transcripts (grey), which fall by construction on the M=0 line, and 23\\% (n=8,421) are differentially expressed (green, orange, or purple). This filtering of 1 TPM is for visualization only and unrelated to the DRIMSeq filtering used in the workflow. As transcripts can belong to multiple categories of differential gene expression (DGE), differential transcript expression (DTE), and differential transcript usage (DTU), here the transcripts are colored by which genes they belong to (those selected to be DGE-, DTE-, or DTU-by-construction)."}
 library(rnaseqDTU)
 library(rafalib)
 data(simulate)
@@ -393,18 +393,24 @@ If instead of `scaledTPM`, we used the original estimated transcript counts
 transcript counts, then a change in transcript usage among
 transcripts of different length could result in a changed total count
 for the gene, even if there is no change in total gene
-expression. This is because the original transcript counts and
+expression. For more detail and a diagram of this
+effect, we refer the reader to Figure 1 of @Trapnell2013Differential.
+Briefly, this is because the original transcript counts and
 `lengthScaledTPM` transcript counts scale with transcript
-length, while `scaledTPM` transcript counts do not. For testing DTU
-using *DRIMSeq* and *DEXSeq*, it is convenient if the count-scale data
+length, while `scaledTPM` transcript counts do not. 
+A change in the total count for the gene, not corrected by an offset, could then
+bias the calculation of proportions and therefore confound DTU analysis.
+For testing DTU using *DRIMSeq* and *DEXSeq*, it is convenient if the count-scale data
 do *not* scale with transcript length within a gene.
-Note that this could be corrected by an offset, but this is not
-easily implemented in the current DTU analysis packages. While this workflow only
-considers existing software features, we are considering developing a new
-`countsFromAbundance` method which would scale abundance for all
-transcripts of a gene by a fixed gene length, then each sample by its
-number of mapped reads, therefore balancing between the benefits of
-`scaledTPM` and `lengthScaledTPM`.
+That this could be corrected by an offset, but this is not
+easily implemented in the current DTU analysis packages. 
+For *gene-level* analysis (DGE), we can use gene-level original 
+counts with an average transcript length offset, 
+gene-level `scaledTPM` counts, or gene-level  `lengthScaledTPM` counts, 
+as all of these three methods control for the length bias 
+described by @Trapnell2013Differential and @Soneson2015Differential.
+Our DTU and DGE `countsFromAbundance` recommendations are
+summarized in Figure \@ref(fig:diagram). 
 
 The following code chunk is what one would use in a typical analysis,
 but is not evaluated in this workflow because the quantification files

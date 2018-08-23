@@ -316,7 +316,7 @@ salmon quant -p 6 -i gencode.v28_salmon-0.10.0 -l IU \
 ## Importing counts into R/Bioconductor
 
 We can use *tximport* to import the estimated counts, abundances and
-effective transcript lengths into R. We recommend to construct a CSV file
+effective transcript lengths into R. We recommend constructing a CSV file
 that keeps track of the sample identifiers and any relevant variables,
 e.g. condition, time point, batch, and so on. 
 
@@ -356,7 +356,7 @@ head(files)
 ```
 
 We can then import transcript-level counts using *tximport*.
-We suggest for DTU analysis to generate counts from abundance, using the
+For DTU analysis, we suggest generating counts from abundance, using the
 `scaledTPM` method described by @Soneson2015Differential. 
 The `countsFromAbundance` option of *tximport* uses estimated
 abundances to generate roughly count-scaled data, such that each
@@ -705,10 +705,10 @@ The transcripts with values in the column, `transcript`, less than 0.05 pass the
 *confirmation* stage on a target 5% *overall false
 discovery rate*, or OFDR. This means that, in expectation, no more
 than 5% of the genes that pass screening will either (1) not contain
-any DTU, so be falsely screened genes, or (2) contain a transcript with a
-transcript adjusted p-value less than 0.05 which does not participate
-in DTU, so contain a falsely confirmed transcript. The *stageR*
-procedure allows us to look at both the genes that passed the
+any DTU, so be falsely screened genes, or (2) contain a falsely confirmed transcript.
+A falsely confirmed transcript is a transcript with an adjusted p-value 
+less than 0.05 which does not exhibit differential usage across condition.
+The *stageR* procedure allows us to look at both the genes that passed the
 screening stage and the transcripts with adjusted p-values less than 
 our target `alpha`, and understand what kind of *overall* error rate
 this procedure entails. This cannot be said for an arbitrary procedure
@@ -782,10 +782,7 @@ be read as "transcript" for our analysis. *DEXSeq* will test -- after
 accounting for total gene expression for this sample and for the
 proportion of this transcript relative to the others -- whether there is
 a condition-specific difference in the transcript proportion relative
-to the others. The testing of "this" vs "others" in *DEXSeq* enables
-it to be much faster than its original published version, which
-involved fitting coefficients for each exon within a gene (here it
-would have been for each transcript within a gene).
+to the others. 
 
 ```{r message=FALSE}
 library(DEXSeq)
@@ -833,6 +830,7 @@ transcript-level results table to a simple *data.frame*:
 ```{r}
 columns <- c("featureID","groupID","pvalue")
 dxr <- as.data.frame(dxr[,columns])
+head(dxr)
 ```
 
 ## stageR following DEXSeq
@@ -930,14 +928,6 @@ dds <- DESeq(dds)
 dres <- DESeq2::results(dds)
 ```
 
-We can confirm that most of the DTU genes are correctly not included in the
-significant DGE results (although some are).
-
-```{r}
-length(dtu.genes)
-table(rownames(dres)[which(dres$padj < .05)] %in% dtu.genes)
-```
-
 Because we happen to know the true status of each of the genes, we can
 make a scatterplot of the results, coloring the genes by their status
 (whether DGE, DTE, or DTU by construction). 
@@ -1006,12 +996,6 @@ y <- estimateDisp(y, design_full)
 fit <- glmFit(y, design_full)
 lrt <- glmLRT(fit)
 tt <- topTags(lrt, n=nrow(y), sort="none")[[1]]
-```
-
-We confirm that most of the DTU genes are correctly not reported as DGE:
-
-```{r}
-table(rownames(tt)[which(tt$FDR < .05)] %in% dtu.genes)
 ```
 
 Again, we can color the genes by their true status in the simulation:

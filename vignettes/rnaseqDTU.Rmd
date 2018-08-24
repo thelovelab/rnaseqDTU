@@ -191,7 +191,7 @@ sample ([ERR188297](https://www.ebi.ac.uk/ena/data/view/ERR188297)) of the GEUVA
 [@Lappalainen2013Transcriptome], and this was used as
 a baseline for transcript abundances in the simulation. Transcripts
 that were associated with estimated counts less than 10 had abundance
-thresholded to 0, all other transcripts were considered "expressed".
+thresholded to 0, all other transcripts were considered "expressed" (n=46,933).
 *alpine* [@Love2016Alpine] was used to estimate realistic fragment GC
 bias from 12 samples from the GEUVADIS 
 project, all from the same sequencing center (the first 12 samples from
@@ -224,8 +224,10 @@ for parameter estimation, and the full report can be accessed at the
 associated GitHub repository for simulation code [@swimdown].
 
 Differential expression across two groups was generated as follows:
-70% of the genes were set as null genes, where abundance was not
-changed across the two groups. For 10% of genes, all isoforms were
+The 46,933 expressed transcripts as defined above belonged to 15,017 genes.
+70% (n=10,514) of these genes with expressed transcripts
+were set as null genes, where abundance was not
+changed across the two groups. For 10% (n=1,501) of genes, all isoforms were
 differentially expressed at a log fold change between 1 and 2.58 (fold
 change between 2 and 6). The set of transcripts in these genes was
 classified as DGE (differential 
@@ -234,14 +236,14 @@ DTE (differential transcript expression), but they did not count as
 DTU (differential transcript usage), as the proportions within the
 gene remained constant. To simulate balanced differential expression, one of
 the two groups was randomly chosen to be the baseline, and the other group
-would have its counts multiplied by the fold change. For 10% of genes,
+would have its counts multiplied by the fold change. For 10% (n=1,501) of genes,
 a single expressed isoform was differentially expressed at a log fold
 change between 1 and 2.58. This set of transcripts was DTE by
 construction. If the chosen transcript was the only expressed isoform
 of a gene, this counted also as DGE and not as DTU, but if there were
 other isoforms that were expressed, this counted for both DGE
 and DTU, as the proportion of expression among the isoforms was
-affected. For 10% of genes, differential transcript
+affected. For 10%  (n=1,501) of genes, differential transcript
 usage was constructed by exchanging the TPM abundance of two expressed
 isoforms, or, if only one isoform was expressed, exchanging the
 abundance of the expressed isoform with a non-expressed one. 

@@ -750,36 +750,47 @@ p-values, where the adjustment was performed independently.
 
 We found that *DRIMSeq* was sensitive to detect DTU, but could exceed
 its false discovery rate (FDR) bounds, particularly on the transcript-level tests, and 
-that a post-hoc, non-specific filtering of the *DRIMSeq* transcript p-values
-improved the FDR control. We considered the standard deviation (SD) of the
+that a post-hoc, non-specific filtering of the *DRIMSeq* transcript
+p-values and adjusted p-values improved the FDR and OFDR control. 
+We considered the standard deviation (SD) of the
 per-sample proportions as a filtering statistic. This statistic does
 not use the information about which samples belong to which condition
-group. We set the p-values for transcripts with small per-sample
-proportion SD to 1 and then re-computed the adjusted p-values using
-the method of @Benjamini1995Controlling. 
-Excluding transcripts with small SD of the per-sample proportions
-brought the observed FDR closer to its nominal target in the
-simulation considered here, as shown below. 
+group. We set the p-values and adjusted p-values for transcripts with
+small per-sample proportion SD to 1. We do not recompute adjusted
+p-values, although we will provide the filtered p-values to the
+*stageR* procedure. 
+
+We note that the p-values are no longer necessarily uniform after
+filtering out small effect size transcripts and genes, although we
+find that in this simulation at least, the filtering made the
+procedure *more conservative*: Excluding transcripts with small SD of
+the per-sample proportions brought both the observed FDR and the
+observed OFDR closer to their nominal targets, as will be shown in the
+evaluations below.
 
 ```{r}
 res.txp.filt <- DRIMSeq::results(d, level="feature")
-getSampleProportions <- function(d) {
+smallProportionSD <- function(d, filter=0.1) {
   cts <- as.matrix(subset(counts(d), select=-c(gene_id, feature_id)))
   gene.cts <- rowsum(cts, counts(d)$gene_id)
   total.cts <- gene.cts[match(counts(d)$gene_id, rownames(gene.cts)),]
-  cts/total.cts
+  props <- cts/total.cts
+  propSD <- sqrt(rowVars(props))
+  propSD < filter
 }
-prop.d <- getSampleProportions(d)
-res.txp.filt$prop.sd <- sqrt(rowVars(prop.d))
-res.txp.filt$pvalue[res.txp.filt$prop.sd < .1] <- 1
-res.txp.filt$adj_pvalue <- p.adjust(res.txp.filt$pvalue, method="BH")
+filt <- smallProportionSD(d)
+res.txp.filt$pvalue[filt] <- 1 
+res.txp.filt$adj_pvalue[filt] <- 1
 ```
 
 The above post-hoc filter is not part of the *DRIMSeq* modeling steps,
 and to avoid interfering with the modeling, we run it after
 *DRIMSeq*. The other three filters used before have been tested by the
 *DRIMSeq* package authors and are therefore a recommended part of an
-analysis before the modeling begins.
+analysis before the modeling begins. We do not apply this post-hoc
+filter to *DEXSeq* in this workflow, as *DEXSeq* seemed to be closer
+to controlling its FDR and OFDR in the evaluations, after using the
+*DRIMSeq* filters recommended in this workflow.
 
 ## DEXSeq
 

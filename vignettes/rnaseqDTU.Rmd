@@ -68,6 +68,25 @@ transcript usage within a gene. If the amount of expression
 switches among two or more isoforms of a gene, then the total gene
 expression may not change by a detectable amount, but 
 the differential transcript usage (DTU) is nevertheless biologically relevant.
+DTU is common when comparing expression across cell types: recent
+analysis of the Genotype-Tissue Expression Project (GTEx) [@GTEx]
+dataset demonstrated that half of all expressed genes contained
+tissue-specific isoforms [@Reyes2018]. DTU may produce functionally
+different gene products through alternative splicing and changes to
+the coding sequence of the transcript, and DTU may result in
+transcripts with different untranslated regions on the 5' or 3' end of
+the transcript, which may affect recognition sites of RNA binding
+proteins.  [@Reyes2018] found that the later case, alternative usage
+of transcription start and termination sites, was a more common event
+than alternative splicing when examining DTU events across tissues in
+GTEx.  Specific patterns of DTU have been identified in a number of
+diseases, including cancer, retinal diseases, and neurological
+disorders, among others [@Scotti2018]. Large-scale analyses of cancer
+transcriptomic data, comparing tumor to normal samples, have
+identified that protein domain losses are a common feature of DTU in
+cancers, including domains involved in protein-protein interactions
+[@Vitting2017;@Climente2017].
+
 While many tutorials and workflows in the
 Bioconductor project address differential gene expression, there are
 fewer workflows for performing a differential transcript usage analysis,
@@ -153,7 +172,7 @@ the null hypothesis at the gene-level, investigators would likely
 desire to know which transcripts within a gene participated in the
 differential usage.
 
-```{r diagram, echo=FALSE, out.width="100%", fig.cap="Diagram of the methods presented in this workflow. In bold are the recommended choices for quantification and filtering Salmon transcript-level data as input to the statistical methods. The recommended DRIMSeq filters are discussed in this workflow."}
+```{r diagram, echo=FALSE, out.width="100%", fig.cap="Diagram of the methods presented in this workflow. The left-side shows two paths for performing differential transcript usage (DTU) using Bioconductor packages and the right-side shows two paths for performing differential gene expression (DGE). DTU and DGE are complementary analyses of changes in transcription across conditions. This workflow focuses mostly on DTU, as there are a number of other published Bioconductor workflows for DGE. In bold are the recommended choices for quantification and filtering Salmon transcript-level data as input to the statistical methods. The recommended DRIMSeq filters are discussed in this workflow."}
 knitr::include_graphics("figs/swimdown_diagram.png")
 ```
 

@@ -64,7 +64,7 @@ opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE,
 RNA-seq experiments can be analyzed to detect differences across groups of
 samples in total gene expression -- the total expression 
 produced by all isoforms of a gene -- and additionally differences in
-transcript usage within a gene. If the amount of expression
+transcript isoform usage within a gene. If the amount of expression
 switches among two or more isoforms of a gene, then the total gene
 expression may not change by a detectable amount, but 
 the differential transcript usage (DTU) is nevertheless biologically relevant.
@@ -75,8 +75,8 @@ tissue-specific isoforms [@Reyes2018]. DTU may produce functionally
 different gene products through alternative splicing and changes to
 the coding sequence of the transcript, and DTU may result in
 transcripts with different untranslated regions on the 5' or 3' end of
-the transcript, which may affect recognition sites of RNA binding
-proteins.  [@Reyes2018] found that the later case, alternative usage
+the transcript, which may affect binding sites of RNA binding
+proteins. [@Reyes2018] found that the later case, alternative usage
 of transcription start and termination sites, was a more common event
 than alternative splicing when examining DTU events across tissues in
 GTEx.  Specific patterns of DTU have been identified in a number of
@@ -84,7 +84,7 @@ diseases, including cancer, retinal diseases, and neurological
 disorders, among others [@Scotti2018]. Large-scale analyses of cancer
 transcriptomic data, comparing tumor to normal samples, have
 identified that protein domain losses are a common feature of DTU in
-cancers, including domains involved in protein-protein interactions
+cancer, including domains involved in protein-protein interactions
 [@Vitting2017;@Climente2017].
 
 While many tutorials and workflows in the
@@ -814,7 +814,7 @@ to controlling its FDR and OFDR in the evaluations, after using the
 ## DEXSeq
 
 The *DEXSeq* package was originally designed for detecting
-differential exon usage [@Anders2012DEXSeq], but can also be adapted
+differential exon usage [@Anders2012Detecting], but can also be adapted
 to run on estimated transcript counts, in order to detect DTU. 
 Using *DEXSeq* on transcript counts was evaluated by
 @Soneson2016Isoform, showing the benefits in FDR control from
@@ -873,7 +873,7 @@ have already conducted filtering via *DRIMSeq* functions). We compute a
 per-gene adjusted p-value, using the *perGeneQValue* function, which
 aggregates evidence from multiple tests within a gene to a single
 p-value for the gene and then corrects for multiple testing across
-genes [@Anders2012DEXSeq]. Other methods for aggregative evidence from the
+genes [@Anders2012Detecting]. Other methods for aggregative evidence from the
 multiple tests within genes have been discussed in a recent
 publication and may be substituted at this step [@Yi2018Gene].
 Finally, we build a simple results table with the
@@ -939,7 +939,7 @@ head(dex.padj)
 ## Citing methods in published research
 
 This concludes the DTU section of the workflow. If you use *DRIMSeq*
-[@Nowicka2016DRIMSeq], *DEXSeq* [@Anders2012DEXSeq], 
+[@Nowicka2016DRIMSeq], *DEXSeq* [@Anders2012Detecting], 
 *stageR* [@Van2017StageR], *tximport* [@Soneson2015Differential], 
 or *Salmon* [@Patro2017Salmon] in
 published research, please cite the relevant methods publications,

@@ -99,7 +99,7 @@ functions that can be used for statistical analysis of DTU include
 *DRIMSeq* [@Nowicka2016DRIMSeq].
 Other Bioconductor packages which are designed around a DTU analysis include 
 *stageR* [@Van2017StageR], *SGSeq* [@Goldstein2016SGSeq], and
-*IsoformSwitchAnalyzeR* [@Vitting2017].
+*IsoformSwitchAnalyzeR* [@Vitting2018].
 *stageR* can be used for post-processing of transcript- 
 and gene-level p-values from DTU detection methods, and will be discussed in this workflow.
 *SGSeq* can be used to visualize 

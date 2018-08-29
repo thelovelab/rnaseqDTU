@@ -433,6 +433,19 @@ described by @Trapnell2013Differential and @Soneson2015Differential.
 Our DTU and DGE `countsFromAbundance` recommendations are
 summarized in Figure \@ref(fig:diagram). 
 
+A final note is that, the motivation for using `scaledTPM` counts 
+hinges on the fact that estimated fragment counts scale with
+transcript length in fragmented RNA-seq data. If a different experiment
+is performed and a different quantification method used to produce
+counts per transcript which *do not* scale with transcript length,
+then the recommendation would be to use these counts per transcript directly.
+Examples of experiments producing counts per transcript that would potentially
+not scale with transcript length include 
+counts of full-transcript-length or nearly-full-transcript-length reads, 
+or counts of 3' tagged RNA-seq reads aggregated to transcript groups.
+In either case, the statistical methods for DTU could be provided directly 
+with the transcript counts.
+
 The following code chunk is what one would use in a typical analysis,
 but is not evaluated in this workflow because the quantification files
 are not provided in the *rnaseqDTU* package due to size restrictions.

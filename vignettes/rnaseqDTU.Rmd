@@ -76,8 +76,8 @@ different gene products through alternative splicing and changes to
 the coding sequence of the transcript, and DTU may result in
 transcripts with different untranslated regions on the 5' or 3' end of
 the transcript, which may affect binding sites of RNA binding
-proteins. [@Reyes2018] found that the later case, alternative usage
-of transcription start and termination sites, was a more common event
+proteins. [@Reyes2018] found that alternative usage
+of transcription start and termination sites was a more common event
 than alternative splicing when examining DTU events across tissues in
 GTEx.  Specific patterns of DTU have been identified in a number of
 diseases, including cancer, retinal diseases, and neurological
@@ -172,14 +172,15 @@ the null hypothesis at the gene-level, investigators would likely
 desire to know which transcripts within a gene participated in the
 differential usage.
 
-```{r diagram, echo=FALSE, out.width="100%", fig.cap="Diagram of the methods presented in this workflow. The left-side shows two paths for performing differential transcript usage (DTU) using Bioconductor packages and the right-side shows two paths for performing differential gene expression (DGE). DTU and DGE are complementary analyses of changes in transcription across conditions. This workflow focuses mostly on DTU, as there are a number of other published Bioconductor workflows for DGE. In bold are the recommended choices for quantification and filtering Salmon transcript-level data as input to the statistical methods. The recommended DRIMSeq filters are discussed in this workflow."}
+```{r diagram, echo=FALSE, out.width="100%", fig.cap="Diagram of the methods presented in this workflow. The left-side shows two paths for performing differential transcript usage (DTU) using Bioconductor packages and the right-side shows two paths for performing differential gene expression (DGE). DTU and DGE are complementary analyses of changes in transcription across conditions. This workflow focuses mostly on DTU, as there are a number of other published Bioconductor workflows for DGE. In bold are the recommended choices for quantification and filtering Salmon transcript-level data as input to the statistical methods. The recommended filters implemented in DRIMSeq, and applied upstream of DRIMSeq and DEXSeq, are discussed in this workflow."}
 knitr::include_graphics("figs/swimdown_diagram.png")
 ```
 
 Here we provide a basic workflow for detecting
 differential transcript usage using Bioconductor packages,
 following quantification of transcript abundance using the *Salmon*
-method. This workflow includes live, runnable code chunks for analysis
+method (Figure \@ref(fig:diagram)). 
+This workflow includes live, runnable code chunks for analysis
 using *DRIMSeq* and *DEXSeq*, as well as for performing stage-wise
 testing of differential transcript usage using the *stageR*
 package. For the workflow, we use data that is simulated, so that 
@@ -325,13 +326,14 @@ technical biases including fragment size distribution (default), fragment GC con
 random hexamer priming bias, and positional bias along the transcript.
 If a transcript had certain properties, related to its length and its
 sequence content, that made it difficult to produce cDNA fragments and 
-sequence reads from these fragments, then its effective length would be
+sequence reads from these fragments, then its effective length should be
 lower for that sample, than if these technical biases were absent.
 The estimates of TPM and the effective lengths can be used to estimate 
 the number of fragments that each transcript produced, which will be called 
 *estimated counts* in this workflow. Different types of estimated counts
 may be correlated with effective transcript length, and so we will discuss 
-in the Workflow our recommended type to use for DTU and DGE analysis.
+in the Workflow our recommended type to use for DTU and DGE analysis 
+(also diagrammed in Figure \@ref(fig:diagram)).
 
 ## DTU testing
 
@@ -362,12 +364,13 @@ and so does not take into account any correlation among the
 counts across features in a group (e.g. transcript counts within a gene),
 except insofar as such correlation is accounted for by columns in the design matrix.
 This last point is important, as correlation induced by DTU across condition groups, 
-or DTU that can be associated with cell-type heterogeneity can be 
+or even DTU that can be associated with cell-type heterogeneity, can be 
 modeled in the *DEXSeq* framework by interaction
 terms with relevant covariates introduced into the design matrix.
 In the current workflow, we provide an example of capturing DTU across
 condition using *DEXSeq*, but future iterations of this workflow 
-may also include controlling for additional covariates.
+may also include controlling for additional covariates,
+such as estimated cell type proportions.
 *DEXSeq* was evaluated on transcript counts by @Soneson2016Isoform
 and then later by @Nowicka2016DRIMSeq, where it was shown in both cases 
 that *DEXSeq* could be used to detect DTU in this configuration, 
@@ -375,32 +378,33 @@ though isoform pre-filtering greatly improved its performance in
 reducing the observed false discovery rate (FDR) closer to its nominal level.
 
 In contrast to the NB model, *DRIMSeq* assumes an Dirichlet Multinomial
-model (DM) for each gene, where the total count for the gene is a fixed
-parameter, and the quantity of interest is the proportions for the
+model (DM) for each gene, where the total count for the gene is 
+considered fixed, and the quantity of interest is the proportion for the
 transcript within a gene for each sample. If the proportion for one
 transcript increases, it must result in a decrease for the proportions
 of the other transcripts of the gene. Genes that are detected as having 
 statistically significant DTU are those in which the 
-proportion changes observed across condition are larger than the variation
-in proportions seen within condition. The variation in proportions is modeled
-using a single *precision* parameter per gene, which will be discussed in the 
+proportion changes observed across condition were large, considering the variation
+in proportions seen within condition. The variation in proportions
+across biological replicates
+is modeled using a single *precision* parameter per gene, which will be discussed in the 
 workflow below. *DRIMSeq* also uses a design matrix, 
 and so can be used to analyze DTU for complex experimental designs,
 including within-patient comparisons, batch correction, or testing of ratios.
 
-The critical differences between the two models are that *DRIMSeq*
+A critical difference between the two models is that *DRIMSeq*
 directly models the correlations among transcript counts 
 within a gene via the DM distribution, and so can capture these correlations 
 across exchangeable samples *within a condition*.
 *DEXSeq* with the NB distribution only can capture correlations among 
-transcript counts within a gene when the DTU is across sample groups defined by
+transcript counts within a gene when the DTU is *across sample groups* defined by
 covariates in the design matrix. On the other hand, *DRIMSeq* is limited
 in modeling a single precision parameter per gene. If there are two 
 transcripts within a gene with very different biological variability
 -- perhaps they have separate promoters under different regulatory control 
 -- then *DEXSeq* may do a better job modeling such heterogeneity 
-in the biological variability, as it estimates a separate dispersion parameter
-for each transcript.
+in the biological variability of transcript expression, 
+as it estimates a separate dispersion parameter for each transcript.
 
 # Workflow
 

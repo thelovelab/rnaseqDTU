@@ -299,7 +299,110 @@ up the analysis, but the Bioconductor packages can easily be run for
 this dataset on all human genes on a laptop in less than an
 hour. Timing for the various packages is included within each section.
 
-# Quantification and data import
+## Quantification and data import
+
+As described in the Introduction, this workflow uses transcript-level
+quantification estimates produced by *Salmon* [@Patro2017Salmon]
+and imported into R/Bioconductor with *tximport* [@Soneson2015Differential].
+Details about how to run *Salmon*, and which type of transcript-level 
+estimated counts should be imported, is covered in the Workflow, 
+with the exact code used to run the DTU analysis.
+*Salmon* estimates the relative abundance of each annotated transcript 
+for each sample in units of transcripts-per-million (TPM);
+the estimated TPM values should be proportional to the abundance
+of the transcripts in the population of cells that were assayed.
+One critical point is that *Salmon* only considers the transcripts that 
+are provided in the annotation; it is not able to detect expression
+of any novel transcripts.
+If many un-annotated transcripts are expressed in the particular set of 
+samples, successful application of this workflow may require first building out
+a more representative set of annotated transcripts via transcriptome assembly or
+full transcript sequencing.
+
+In addition to relative abundance, *Salmon* estimates the *effective length* 
+of each transcript, which can take into account a number of sample-specific 
+technical biases including fragment size distribution (default), fragment GC content,
+random hexamer priming bias, and positional bias along the transcript.
+If a transcript had certain properties, related to its length and its
+sequence content, that made it difficult to produce cDNA fragments and 
+sequence reads from these fragments, then its effective length would be
+lower for that sample, than if these technical biases were absent.
+The estimates of TPM and the effective lengths can be used to estimate 
+the number of fragments that each transcript produced, which will be called 
+*estimated counts* in this workflow. Different types of estimated counts
+may be correlated with effective transcript length, and so we will discuss 
+in the Workflow our recommended type to use for DTU and DGE analysis.
+
+## DTU testing
+
+We focus on two statistical models for DTU testing in this workflow, 
+*DRIMSeq* [@Nowicka2016DRIMSeq] and *DEXSeq* [@Anders2012Detecting].
+*DEXSeq* was published first, as a statistical model for detecting differences
+in exon usage across samples in different conditions. Most of the *DEXSeq*
+functions and documentation refer specifically to *exons* or *exonic parts* 
+within a *gene*, while the final results table refers more generally 
+to these as *features* within a *group*.
+It is this more general usage that we will employ in this workflow, substituting
+estimated transcript counts in place of exonic part counts.
+
+*DEXSeq* assumes a Negative Binomial (NB) distribution for the feature counts, 
+and considers the counts for each feature (originally, the exonic parts) 
+relative to counts for all other features of the group (the gene), 
+using an interaction term in a generalized linear model (GLM). 
+The GLM framework is an extension of the linear model (LM), but shares
+with LM the usage of a design matrix, typically represented by $\mathbf{X}$, 
+which is made up of columns of covariates that are multiplied by scalar coefficients, 
+typically represented by $\mathbf{\beta}$. The design matrix with its multiple coefficients
+is useful for extending statistical models beyond simple group comparisons, allowing for 
+more complex situations, such as within-patient comparisons, batch correction,
+or testing of ratios.
+
+*DEXSeq* models each feature independently in the GLM fitting stage,
+and so does not take into account any correlation among the 
+counts across features in a group (e.g. transcript counts within a gene),
+except insofar as such correlation is accounted for by columns in the design matrix.
+This last point is important, as correlation induced by DTU across condition groups, 
+or DTU that can be associated with cell-type heterogeneity can be 
+modeled in the *DEXSeq* framework by interaction
+terms with relevant covariates introduced into the design matrix.
+In the current workflow, we provide an example of capturing DTU across
+condition using *DEXSeq*, but future iterations of this workflow 
+may also include controlling for additional covariates.
+*DEXSeq* was evaluated on transcript counts by @Soneson2016Isoform
+and then later by @Nowicka2016DRIMSeq, where it was shown in both cases 
+that *DEXSeq* could be used to detect DTU in this configuration, 
+though isoform pre-filtering greatly improved its performance in 
+reducing the observed false discovery rate (FDR) closer to its nominal level.
+
+In contrast to the NB model, *DRIMSeq* assumes an Dirichlet Multinomial
+model (DM) for each gene, where the total count for the gene is a fixed
+parameter, and the quantity of interest is the proportions for the
+transcript within a gene for each sample. If the proportion for one
+transcript increases, it must result in a decrease for the proportions
+of the other transcripts of the gene. Genes that are detected as having 
+statistically significant DTU are those in which the 
+proportion changes observed across condition are larger than the variation
+in proportions seen within condition. The variation in proportions is modeled
+using a single *precision* parameter per gene, which will be discussed in the 
+workflow below. *DRIMSeq* also uses a design matrix, 
+and so can be used to analyze DTU for complex experimental designs,
+including within-patient comparisons, batch correction, or testing of ratios.
+
+The critical differences between the two models are that *DRIMSeq*
+directly models the correlations among transcript counts 
+within a gene via the DM distribution, and so can capture these correlations 
+across exchangeable samples *within a condition*.
+*DEXSeq* with the NB distribution only can capture correlations among 
+transcript counts within a gene when the DTU is across sample groups defined by
+covariates in the design matrix. On the other hand, *DRIMSeq* is limited
+in modeling a single precision parameter per gene. If there are two 
+transcripts within a gene with very different biological variability
+-- perhaps they have separate promoters under different regulatory control 
+-- then *DEXSeq* may do a better job modeling such heterogeneity 
+in the biological variability, as it estimates a separate dispersion parameter
+for each transcript.
+
+# Workflow
 
 ## Salmon quantification
 
@@ -672,6 +775,17 @@ head(res.txp)
 Because the `pvalue` column may contain `NA` values, we use the
 following function to turn these into 1's. The `NA` values would
 otherwise cause problems for the stage-wise analysis.
+From investigating these `NA` p-value cases for *DRIMSeq*,
+they all occur when one condition group has all zero counts for a
+transcript, but sufficient counts from the other condition group, and
+sufficient counts for the gene. *DRIMSeq* will not estimate a
+precision for such a gene.  These all happen to be true positive genes
+for DTU in the simulation, where the isoform switch is total or nearly
+total.  *DEXSeq*, shown in a later section, does not produce `NA`
+p-values for these genes.  A potential fix for would be to use a
+plug-in common or trended precision for such genes, but this is not
+implemented in the current version of *DRIMSeq*.
+
 
 ```{r}
 no.na <- function(x) ifelse(is.na(x), 1, x)
@@ -1113,6 +1227,14 @@ legend("topright",
        col=c(1:3,8), pch=20, bty="n")
 ```
 
+## End of workflow section
+
+This marks the end of the *DTU workflow*. Please consult the 
+[published version of this workflow](https://f1000research.com/articles/7-952/) 
+for a further section on *Evaluation*, including comparison of the
+Bioconductor packages and methods shown in the workflow with other
+popular packages and methods.
+
 # Discussion 
 
 Here we presented a workflow for analyzing RNA-seq experiments for
@@ -1120,18 +1242,16 @@ differential transcript usage across groups of samples. The
 Bioconductor packages used, *DRIMSeq*, *DEXSeq*, and *stageR*, are
 simple to use and fast when run on transcript-level data. We show how
 these can be used downstream of transcript abundance quantification
-with *Salmon*. We evaluated these methods on a simulated dataset and
-showed how the transcript usage results complement a gene-level
-analysis, which can also be run on output from *Salmon*, using the
-*tximport* package to aggregate quantification to the gene level. We
-used the simulated dataset to evaluate Bioconductor and other R
-packages for differential gene expression, and differential transcript
-expression. We recommend the use of *stageR* for its formal
+with *Salmon*. 
+
+We recommend the use of *stageR* for its formal
 statistical procedure involving a screening and confirmation stage, as
 this fits closely to what we expect a typical analysis to
-entail. *stageR* then provides error control for an overall false
-discovery rate, assuming that the underlying tests are well
-calibrated.
+entail. 
+It is likely that an investigator would want both a list of 
+statistically significant genes *and* transcripts participating in DTU, 
+and *stageR* provides error control on this pair of lists, 
+assuming that the underlying tests are well calibrated.
 
 One potential limitation of this workflow is that, in contrast to
 other methods such as the standard *DEXSeq* analysis, *SUPPA2*, or
@@ -1172,8 +1292,8 @@ are available at the simulation GitHub repository [@swimdown]
 
 # Acknowledgments
 
-The authors thank Koen Van den Berge and Malgorzata Nowicka for
-helpful comments on the workflow.
+The authors thank Koen Van den Berge, Malgorzata Nowicka, and Botond
+Sipos for helpful comments on the workflow.
 
 # References
 

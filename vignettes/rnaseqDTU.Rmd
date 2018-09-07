@@ -913,7 +913,7 @@ p-values, although we will provide the filtered p-values to the
 We note that the p-values are no longer necessarily uniform after
 filtering out small effect size transcripts and genes, although we
 find that in this simulation at least, the filtering made the
-procedure *more conservative*: Excluding transcripts with small SD of
+procedure *more conservative*: excluding transcripts with small SD of
 the per-sample proportions brought both the observed FDR and the
 observed OFDR closer to their nominal targets, as will be shown in the
 evaluations below.

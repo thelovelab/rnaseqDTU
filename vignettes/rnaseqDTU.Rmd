@@ -786,7 +786,7 @@ sufficient counts for the gene. *DRIMSeq* will not estimate a
 precision for such a gene.  These all happen to be true positive genes
 for DTU in the simulation, where the isoform switch is total or nearly
 total.  *DEXSeq*, shown in a later section, does not produce `NA`
-p-values for these genes.  A potential fix for would be to use a
+p-values for these genes.  A potential fix would be to use a
 plug-in common or trended precision for such genes, but this is not
 implemented in the current version of *DRIMSeq*.
 

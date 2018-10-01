@@ -11,7 +11,7 @@ author:
   - SIB Swiss Institute of Bioinformatics, Zurich, Switzerland
 - name: Rob Patro
   affiliation: Department of Computer Science, Stony Brook University, Stony Brook, NY, US
-date: 5 June, 2018
+date: 1 October, 2018
 vignette: >
   %\VignetteIndexEntry{RNA-seq workflow for differential transcript usage following Salmon quantification}
   %\VignetteEngine{knitr::rmarkdown}
@@ -58,6 +58,8 @@ opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE,
 **Bioconductor version**: `r BiocManager::version()`
 
 **Package**: `r packageVersion("rnaseqDTU")`
+
+**Publication DOI**: [10.12688/f1000research.15398.3](http://dx.doi.org/10.12688/f1000research.15398.3)
 
 # Introduction
 
@@ -1234,7 +1236,7 @@ legend("topright",
 ## End of workflow section
 
 This marks the end of the *DTU workflow*. Please consult the 
-[published version of this workflow](https://f1000research.com/articles/7-952/) 
+[published version of this workflow](http://dx.doi.org/10.12688/f1000research.15398.3) 
 for a further section on *Evaluation*, including comparison of the
 Bioconductor packages and methods shown in the workflow with other
 popular packages and methods.

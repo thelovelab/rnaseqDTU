@@ -1,0 +1,12 @@
+citEntry(entry="article",
+         title = "Swimming downstream: statistical analysis of differential transcript usage following Salmon quantification",
+         author = personList( as.person("Michael I. Love"),
+                              as.person("Charlotte Soneson"),
+                              as.person("Rob Patro")),
+         year = 2018,
+         journal = "F1000Research",
+         doi = "10.12688/f1000research.15398.3",
+         textVersion = 
+         paste("Love, M.I., Soneson, C., Patro, R.", 
+               "Swimming downstream: statistical analysis of differential transcript usage following Salmon quantification",
+               "F1000Research (2018)") )

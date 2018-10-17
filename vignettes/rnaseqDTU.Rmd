@@ -196,6 +196,11 @@ expression levels of the transcripts, the amount of biological
 variability of gene expression levels across samples, and realistic coverage
 of reads along the transcript.
 
+Note that a [published version of this workflow](http://dx.doi.org/10.12688/f1000research.15398.3) 
+exists in the Bioconductor channel of the journal *F1000Research*.
+The published version additionally contains evaluations of the methods
+shown here alongside other popular methods for DTU, DGE, and DTE.
+
 # Methods
 
 ## Simulation

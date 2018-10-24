@@ -61,6 +61,17 @@ opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE,
 
 **Publication DOI**: [10.12688/f1000research.15398.3](http://dx.doi.org/10.12688/f1000research.15398.3)
 
+# Getting help
+
+If you have questions about this workflow or any Bioconductor
+software, please post these to the 
+[Bioconductor support site](https://support.bioconductor.org). 
+If the questions concern a specific package, you can tag the post with
+the name of the package, or for general questions about the workflow,
+tag the post with `rnaseqdtu`.  Note the
+[posting guide](http://www.bioconductor.org/help/support/posting-guide/)
+for crafting an optimal question for the support site.
+
 # Introduction
 
 RNA-seq experiments can be analyzed to detect differences across groups of

@@ -50,7 +50,7 @@ output: BiocStyle::html_document
 library(knitr)
 library(rmarkdown)
 opts_chunk$set(message=TRUE, warning=FALSE, error=FALSE, 
-               cache=TRUE, fig.width=5, fig.height=5)
+               cache=FALSE, fig.width=5, fig.height=5)
 ```
 
 **R version**: `r R.version.string`

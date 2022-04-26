@@ -1,6 +1,6 @@
 Package: rnaseqDTU
 Title: RNA-seq workflow for differential transcript usage following Salmon quantification
-Version: 1.16.0
+Version: 1.17.0
 Date: 2018-06-27
 Authors@R: c(person(role=c("aut", "cre"), "Michael", "Love", email = "michaelisaiahlove@gmail.com"),
              person(role=c("aut"), "Charlotte", "Soneson"),
